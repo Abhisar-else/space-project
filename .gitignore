@@ -1,0 +1,27 @@
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+conda-env/
+
+# Local configuration & secrets
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.git-credentials
+
+# Temporary frames / compiler outputs
+temp_frames/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,14 @@
+matplotlib
+cartopy
+geopandas
+xarray
+netCDF4
+cmocean
+imageio
+scipy
+pandas
+numpy
+shapely
+pyproj
+requests
+streamlit

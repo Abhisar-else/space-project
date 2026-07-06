@@ -1,0 +1,24 @@
+# Core
+geopandas
+shapely
+fiona
+pyproj
+cartopy
+
+# Data handling
+xarray
+netCDF4
+h5py
+numpy
+pandas
+
+# Visualization
+matplotlib
+plotly
+PIL / Pillow          # image stitching + animation frames
+imageio               # GIF/MP4 export
+ffmpeg                # (system install, not pip)
+
+# Optional / species data
+gbif-python           # pip install pygbif
+requests              # for REST APIs
