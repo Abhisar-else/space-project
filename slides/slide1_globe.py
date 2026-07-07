@@ -26,8 +26,16 @@ def render_globe(output_path="outputs/slide1_globe.png"):
         ax.patch.set_facecolor(BG_COLOR)
     
     # Draw oceans and land
-    ax.add_feature(cfeature.OCEAN, facecolor=DEEP_OCEAN, edgecolor='none')
-    ax.add_feature(cfeature.LAND, facecolor='#0d1b2a', edgecolor='#00b4ff', linewidth=0.3)
+    from utils.generators import load_natural_earth
+    ocean_gdf = load_natural_earth("ocean")
+    land_gdf = load_natural_earth("land")
+
+    if ocean_gdf is not None and land_gdf is not None:
+        ax.add_geometries(ocean_gdf.geometry, crs=ccrs.PlateCarree(), facecolor=DEEP_OCEAN, edgecolor='none')
+        ax.add_geometries(land_gdf.geometry, crs=ccrs.PlateCarree(), facecolor='#0d1b2a', edgecolor='#00b4ff', linewidth=0.3)
+    else:
+        ax.add_feature(cfeature.OCEAN, facecolor=DEEP_OCEAN, edgecolor='none')
+        ax.add_feature(cfeature.LAND, facecolor='#0d1b2a', edgecolor='#00b4ff', linewidth=0.3)
     ax.add_feature(cfeature.COASTLINE, edgecolor='#00b4ff', linewidth=0.5)
     
     # Add gridlines matching the river glow color
