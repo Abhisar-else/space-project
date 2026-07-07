@@ -5,7 +5,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import matplotlib.pyplot as plt
 from utils.colors import BG_COLOR, RIVER_GLOW, RIVER_CORE, apply_dark_style
-from utils.generators import generate_river_network
+from utils.generators import load_river_network
+
 
 def render_rivers(output_path="outputs/slide3_rivers.png"):
     apply_dark_style()

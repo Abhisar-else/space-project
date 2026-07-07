@@ -84,3 +84,18 @@ def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gdb"
             print(f"HydroRIVERS load failed: {e}")
             return None
     return None
+import os
+import geopandas as gpd
+
+def load_river_network(shapefile_path="data/hydrorivers/HydroRIVERS_v10.shp", min_order=6):
+    """Load real HydroRIVERS data; falls back to synthetic if missing."""
+    if not os.path.exists(shapefile_path):
+        return generate_river_network()
+    try:
+        gdf = gpd.read_file(shapefile_path)
+        # ORD_FLOW: lower number = larger river. Filter to keep file/render size sane.
+        if "ORD_FLOW" in gdf.columns:
+            gdf = gdf[gdf["ORD_FLOW"] <= min_order]
+        return gdf[["geometry"]]
+    except Exception:
+        return generate_river_network()
