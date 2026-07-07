@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from utils.colors import BG_COLOR, DEEP_OCEAN, apply_dark_style
+import cartopy
+cartopy.config['data_dir'] = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'data', 'naturalearth')
+)
 
 def render_globe(output_path="outputs/slide1_globe.png"):
     apply_dark_style()

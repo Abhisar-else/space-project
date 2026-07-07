@@ -25,3 +25,7 @@ temp_frames/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Raw downloaded datasets (fetch via SETUP.md / DATA_SOURCES.md instead)
+data/
+outputs/
