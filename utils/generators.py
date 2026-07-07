@@ -68,17 +68,19 @@ def generate_sea_ice_cycle(frames=12):
         concentration = np.clip((lat_grid - min_lat) / (90 - min_lat) * 100, 0, 100)
         cycles.append(concentration)
     return lons, lats, cycles
-def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gbd", layer="HydroRIVERS_v10"):
-    """Load real HydroRIVERS global network from a file geodatabase.
-      Returns None if missing,
-    so callers fall back to generate_river_network()."""
+def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gdb", layer="HydroRIVERS_v10", max_ord_flow=4):
+    """Load real HydroRIVERS global network from a File Geodatabase,
+    filtered to major rivers only (ORD_FLOW <= max_ord_flow) for renderable size.
+    Returns None if missing, so callers fall back to generate_river_network()."""
     import os
     import geopandas as gpd
 
     path = os.path.join(data_dir, gbd_name)
     if os.path.exists(path):
         try:
-            return gpd.read_file(path, layer=layer)
-        except Exception :
+            gdf = gpd.read_file(path, layer=layer, where=f"ORD_FLOW <= {max_ord_flow}")
+            return gdf
+        except Exception as e:
+            print(f"HydroRIVERS load failed: {e}")
             return None
     return None
