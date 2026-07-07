@@ -13,7 +13,10 @@ def render_rivers(output_path="outputs/slide3_rivers.png"):
     ax.set_facecolor(BG_COLOR)
     fig.patch.set_facecolor(BG_COLOR)
     
-    gdf = generate_river_network()
+    from utils.generators import load_hydrorivers
+    gdf = load_hydrorivers()
+    if gdf is None:
+        gdf = generate_river_network()
     # Draw outer glow
     gdf.plot(ax=ax, color=RIVER_GLOW, linewidth=4, alpha=0.2)
     # Draw mid glow

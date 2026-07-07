@@ -276,7 +276,10 @@ To ensure the visualizations render immediately without waiting for huge externa
       fig, ax = plt.subplots(figsize=(16, 9), dpi=300)
       ax.set_facecolor(BG_COLOR)
       
-      gdf = generate_river_network()
+      from utils.generators import load_hydrorivers
+    gdf = load_hydrorivers()
+    if gdf is None:
+        gdf = generate_river_network()
       gdf.plot(ax=ax, color=RIVER_GLOW, linewidth=3, alpha=0.3)
       gdf.plot(ax=ax, color=RIVER_GLOW, linewidth=1.5, alpha=0.6)
       gdf.plot(ax=ax, color=RIVER_CORE, linewidth=0.6, alpha=1.0)

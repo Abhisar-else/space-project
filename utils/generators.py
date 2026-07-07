@@ -64,3 +64,13 @@ def generate_sea_ice_cycle(frames=12):
         concentration = np.clip((lat_grid - min_lat) / (90 - min_lat) * 100, 0, 100)
         cycles.append(concentration)
     return lons, lats, cycles
+def load_hydrorivers(data_dir="data/hydrorivers", filename="HydroRIVERS_v10.shp"):
+    """Load real HydroRIVERS global network. Returns None if missing,
+    so callers fall back to generate_river_network()."""
+    import os
+    import geopandas as gpd
+
+    path = os.path.join(data_dir, filename)
+    if os.path.exists(path):
+        return gpd.read_file(path)
+    return None
