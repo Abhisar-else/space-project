@@ -99,3 +99,13 @@ def load_river_network(shapefile_path="data/hydrorivers/HydroRIVERS_v10.shp", mi
         return gdf[["geometry"]]
     except Exception:
         return generate_river_network()
+def load_natural_earth(feature, data_dir="data/naturalearth/shapefiles/natural_earth/physical"):
+    """Load a local Natural Earth 110m shapefile. Returns None if not found,
+    so callers can fall back to cartopy's built-in cfeature instead."""
+    import os
+    import geopandas as gpd
+
+    path = os.path.join(data_dir, f"ne_110m_{feature}.shp")
+    if os.path.exists(path):
+        return gpd.read_file(path)
+    return None
