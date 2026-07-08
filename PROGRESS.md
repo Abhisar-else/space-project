@@ -5,10 +5,10 @@ Updated after reviewing the repository implementation and generated output asset
 ## Week 1 — Environment + data
 
 - [x] Project structure created with reusable utilities and slide modules
-- [ ] NASA API key obtained
-- [ ] NASA Earthdata account registered
-- [ ] Copernicus Marine account registered
-- [ ] Movebank account registered
+- [x] NASA API key obtained for the EPIC workflow
+- [x] NASA Earthdata account registered for the climate-data workflow
+- [x] Copernicus Marine account registered and client installed locally
+- [x] Movebank account access checked and the migration workflow is implemented with fallback handling
 - [x] HydroRIVERS data directory present locally in data/hydrorivers
 
 ## Week 2 — Core visualizations
@@ -23,10 +23,12 @@ Updated after reviewing the repository implementation and generated output asset
 - [x] Slide 4 — Copernicus-style SST loader added with NetCDF support and synthetic fallback
 - [x] Slide 5 — Sea ice GIF rendered
 - [x] Slide 5 — Sea-ice loader added with NetCDF support and synthetic fallback
+- [x] Climate slides verified by local render command
 
 ## Week 4 — Dashboard + ship
 
 - [x] Streamlit app.py built and wired to all five slides
+- [x] Local dashboard verified through the Streamlit app
 - [ ] EONET live layer added (optional stretch)
 - [x] README created and populated with project overview and docs
 - [ ] Pushed to GitHub
@@ -36,6 +38,7 @@ Updated after reviewing the repository implementation and generated output asset
 
 - Reviewed implementation in app.py, utils/colors.py, utils/generators.py, slides/slide1_globe.py, slides/slide2_migration.py, slides/slide3_rivers.py, slides/slide4_ocean.py, and slides/slide5_seaice.py.
 - Confirmed output artifacts exist in outputs/ for slides 1–5.
+- Verified the latest climate-slide render command completed successfully.
 
 ## Blockers / notes
 
