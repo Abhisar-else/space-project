@@ -29,3 +29,8 @@ Desktop.ini
 # Raw downloaded datasets (fetch via SETUP.md / DATA_SOURCES.md instead)
 data/
 outputs/
+
+# Local graphify artifacts (generated for local exploration only)
+graphify-out/
+*.graphml
+*.svg
