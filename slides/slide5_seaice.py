@@ -33,9 +33,7 @@ def render_sea_ice_gif(output_path="outputs/slide5_seaice.gif"):
         ax.axis('off')
         
         # Adding month title label
-        months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-        month_name = months[idx % 12]
-        ax.set_title(f"SEA ICE DYNAMICS\nAnnual Polar Freeze Cycle - {month_name}", fontsize=10, color='#e0e0e0', weight='bold', pad=10)
+        ax.set_title(f"SEA ICE DYNAMICS\nAnnual Polar Freeze Cycle - {idx + 1}", fontsize=10, color='#e0e0e0', weight='bold', pad=10)
         
         frame_path = os.path.join(temp_dir, f"frame_{idx:02d}.png")
         plt.savefig(frame_path, bbox_inches='tight', facecolor=BG_COLOR, dpi=120)  # Moderate resolution for compact GIF size

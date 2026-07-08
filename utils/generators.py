@@ -153,10 +153,11 @@ def load_sea_ice_data(data_dir="data", pattern="*.nc"):
             ds = xr.open_dataset(path)
             for var_name in ("siconc", "sea_ice_fraction", "ice_conc"):
                 if var_name in ds.data_vars:
-                    data = ds[var_name].to_numpy()
+                    data = np.asarray(ds[var_name].to_numpy())
                     lons = np.asarray(ds["lon"].to_numpy()) if "lon" in ds.coords else np.linspace(-180, 180, data.shape[-1])
                     lats = np.asarray(ds["lat"].to_numpy()) if "lat" in ds.coords else np.linspace(50, 90, data.shape[-2])
                     if data.ndim >= 2:
+                        data = np.clip(data * 100, 0, 100)
                         ds.close()
                         return lons, lats, data
             ds.close()
