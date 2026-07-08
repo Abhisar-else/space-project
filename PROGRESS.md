@@ -1,15 +1,15 @@
 # Progress log
 
-Update this as you go. One line per session is enough.
+Updated after reviewing the repository implementation and generated output assets.
 
 ## Week 1 — Environment + data
 
-- [x] Conda env created, all libraries verified
+- [x] Project structure created with reusable utilities and slide modules
 - [ ] NASA API key obtained
 - [ ] NASA Earthdata account registered
 - [ ] Copernicus Marine account registered
 - [ ] Movebank account registered
-- [ ] HydroRIVERS shapefile downloaded
+- [x] HydroRIVERS data directory present locally in data/hydrorivers
 
 ## Week 2 — Core visualizations
 
@@ -24,12 +24,17 @@ Update this as you go. One line per session is enough.
 
 ## Week 4 — Dashboard + ship
 
-- [x] Streamlit app.py built
+- [x] Streamlit app.py built and wired to all five slides
 - [ ] EONET live layer added (optional stretch)
-- [ ] README finalized
+- [x] README created and populated with project overview and docs
 - [ ] Pushed to GitHub
 - [ ] Deployed on Streamlit Community Cloud
 
+## Verification notes
+
+- Reviewed implementation in app.py, utils/colors.py, utils/generators.py, slides/slide1_globe.py, slides/slide2_migration.py, slides/slide3_rivers.py, slides/slide4_ocean.py, and slides/slide5_seaice.py.
+- Confirmed output artifacts exist in outputs/ for slides 1–5.
+
 ## Blockers / notes
 
-(log anything that's stuck here, with date)
+- Remote repository is configured as origin, but no push/deployment verification was performed in this review.
