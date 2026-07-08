@@ -13,7 +13,7 @@ def test_load_sea_ice_data_clips_concentration_to_0_100(tmp_path):
     data_path = tmp_path / "seaice.nc"
     lons = np.array([0.0, 1.0])
     lats = np.array([60.0, 61.0])
-    values = np.array([[[1.2, -0.1]], [[0.4, 1.1]]])
+    values = np.array([[[1.2, -0.1], [0.4, 1.1]], [[0.9, 0.2], [0.5, 0.8]]])
     ds = xr.Dataset(
         data_vars={"siconc": (("time", "lat", "lon"), values)},
         coords={"time": np.array([0, 1]), "lat": lats, "lon": lons},
@@ -26,4 +26,5 @@ def test_load_sea_ice_data_clips_concentration_to_0_100(tmp_path):
     assert np.allclose(loaded_lats, lats)
     assert np.nanmin(cycles) >= 0
     assert np.nanmax(cycles) <= 100
-    assert cycles.shape == values.shape
+    assert len(cycles) == values.shape[0]
+    assert cycles[0].shape == values.shape[1:]
