@@ -97,31 +97,35 @@ os.makedirs("outputs", exist_ok=True)
 # Render chosen slide
 if slide == "1. Earth Overview":
     st.subheader("1. Earth Overview — Natural Earth & NASA EPIC")
-    img_path = "outputs/slide1_globe.png"
-    
-    if not os.path.exists(img_path):
-        with st.spinner("Rendering glowing Orthographic globe..."):
-            render_globe(img_path)
-            
+
+    gif_path = "outputs/slide1_globe_rotation.gif"
+    if not os.path.exists(gif_path):
+        with st.spinner("Rendering globe rotation..."):
+            from slides.slide1_globe import render_globe_animation
+            render_globe_animation(gif_path)
+
+    epic_path = "outputs/slide1_epic.png"
+    if not os.path.exists(epic_path):
+        with st.spinner("Fetching NASA EPIC reference photo..."):
+            render_globe("outputs/slide1_globe.png", epic_path)
+
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.image(img_path, width='stretch')
-    epic_path = "outputs/slide1_epic.png"
-    if os.path.exists(epic_path):
-        with col2:
+        st.image(gif_path, width='stretch')
+    with col2:
+        if os.path.exists(epic_path):
             st.image(epic_path, width='stretch')
-    
+
     st.markdown(
         """
         <div class="citation-box">
             <h4>Data Attribution & Source Details</h4>
             <p><b>Data Sources:</b> Natural Earth Vector boundaries (coastlines/land features) & NASA DSCOVR EPIC Full-Disk Earth camera.</p>
-            <p><b>Visual Concept:</b> A suspended planet view highlighting the ocean surface boundaries using a glowing cyan outline against deep space.</p>
+            <p><b>Visual Concept:</b> A rotating planet view highlighting the ocean surface boundaries using a glowing cyan outline against deep space.</p>
         </div>
         """,
         unsafe_allow_html=True
     )
-
 elif slide == "2. Species Migration":
     st.subheader("2. Species Migration — Movebank & OBIS-SEAMAP")
     img_path = "outputs/slide2_migration.png"
@@ -145,20 +149,21 @@ elif slide == "2. Species Migration":
 
 elif slide == "3. River Veins":
     st.subheader("3. River Veins — WWF HydroRIVERS")
-    img_path = "outputs/slide3_rivers.png"
-    
-    if not os.path.exists(img_path):
-        with st.spinner("Extracting global freshwater vascular structures..."):
-            render_rivers(img_path)
-            
-    st.image(img_path, width='stretch')
-    
+    gif_path = "outputs/slide3_rivers.gif"
+
+    if not os.path.exists(gif_path):
+        with st.spinner("Animating river flow pulses..."):
+            from slides.slide3_rivers import render_rivers_animated
+            render_rivers_animated(gif_path)
+
+    st.image(gif_path, width='stretch')
+
     st.markdown(
         """
         <div class="citation-box">
             <h4>Data Attribution & Source Details</h4>
             <p><b>Data Sources:</b> Global river network geometry from the WWF HydroSHEDS / HydroRIVERS database.</p>
-            <p><b>Visual Concept:</b> Depicts rivers as neon vascular veins showing flow pathways across major basins. Renders glow borders to emphasize the organic river structure.</p>
+            <p><b>Visual Concept:</b> Depicts rivers as animated neon vascular veins with a pulsing glow simulating flow, showing pathways across major basins.</p>
         </div>
         """,
         unsafe_allow_html=True

@@ -162,3 +162,92 @@ def download_epic_image(entry, save_dir="data/epic_cache"):
     except Exception as e:
         print(f"EPIC image download failed: {e}")
         return None
+def list_movebank_studies(species_search=None):
+    """List Movebank studies accessible with current credentials.
+    Returns None on failure so callers can fall back to synthetic tracks."""
+    import os
+    import requests
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    username = os.getenv("MOVEBANK_USERNAME")
+    password = os.getenv("MOVEBANK_PASSWORD")
+    if not username or not password:
+        return None
+
+    url = "https://www.movebank.org/movebank/service/direct-read"
+    params = {"entity_type": "study"}
+    if species_search:
+        params["i_can_see_data"] = "true"
+
+    try:
+        resp = requests.get(url, params=params, auth=(username, password), timeout=15)
+        resp.raise_for_status()
+        return resp.text
+    except Exception as e:
+        print(f"Movebank study list failed: {e}")
+        return None
+def fetch_movebank_locations(study_id):
+    """Fetch real location data for a Movebank study.
+    Returns None on failure so callers fall back to synthetic tracks."""
+    import os
+    import requests
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    username = os.getenv("MOVEBANK_USERNAME")
+    password = os.getenv("MOVEBANK_PASSWORD")
+    if not username or not password:
+        return None
+
+    url = "https://www.movebank.org/movebank/service/direct-read"
+    params = {"entity_type": "event", "study_id": study_id}
+
+    try:
+        resp = requests.get(url, params=params, auth=(username, password), timeout=30)
+        resp.raise_for_status()
+        return resp.text
+    except Exception as e:
+        print(f"Movebank location fetch failed: {e}")
+        return None
+def fetch_movebank_locations(study_id):
+    """Fetch real location data for a Movebank study.
+    Returns None on failure so callers fall back to synthetic tracks."""
+    import os
+    import requests
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    username = os.getenv("MOVEBANK_USERNAME")
+    password = os.getenv("MOVEBANK_PASSWORD")
+    if not username or not password:
+        return None
+
+    url = "https://www.movebank.org/movebank/service/direct-read"
+    params = {
+        "entity_type": "event",
+        "study_id": study_id,
+        "license-md5": "",  # first request: check if license acceptance needed
+    }
+
+    try:
+        resp = requests.get(url, params=params, auth=(username, password), timeout=30)
+        resp.raise_for_status()
+
+        # If Movebank returns the license HTML page, extract the md5 and re-request with acceptance
+        if resp.text.strip().startswith("<html>"):
+            import re
+            match = re.search(r'license-md5["\']?\s*[:=]\s*["\']?([a-f0-9]{32})', resp.text)
+            if match:
+                license_md5 = match.group(1)
+                params["license-md5"] = license_md5
+                resp = requests.get(url, params=params, auth=(username, password), timeout=30)
+                resp.raise_for_status()
+            else:
+                print("Could not find license-md5 in response")
+                return None
+
+        return resp.text
+    except Exception as e:
+        print(f"Movebank location fetch failed: {e}")
+        return None
