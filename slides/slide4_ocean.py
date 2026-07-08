@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 from utils.colors import BG_COLOR, SST_COLD, SST_MID, SST_WARM, apply_dark_style
-from utils.generators import generate_sst_grid
+from utils.generators import load_ocean_sst_data
 
 def render_ocean_sst(output_path="outputs/slide4_ocean.png"):
     apply_dark_style()
@@ -15,7 +15,7 @@ def render_ocean_sst(output_path="outputs/slide4_ocean.png"):
     ax.set_facecolor(BG_COLOR)
     fig.patch.set_facecolor(BG_COLOR)
     
-    lons, lats, sst = generate_sst_grid()
+    lons, lats, sst = load_ocean_sst_data()
     
     # Custom thermal color scale matching design guidelines
     cmap = LinearSegmentedColormap.from_list("custom_thermal", [SST_COLD, SST_MID, SST_WARM])

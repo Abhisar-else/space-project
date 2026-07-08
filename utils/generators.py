@@ -1,24 +1,22 @@
 # utils/generators.py
-from fileinput import filename
+from pathlib import Path
 
-from fileinput import filename
-
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
+import xarray as xr
 from shapely.geometry import LineString
+
 
 def generate_migration_tracks(num_species=4, points_per_track=100):
     data = []
     species_list = ["albatross", "blue_whale", "emperor_penguin", "loggerhead_turtle"]
     for i in range(min(num_species, len(species_list))):
         sp = species_list[i]
-        # Starting point
         lon, lat = np.random.uniform(-180, 180), np.random.uniform(-60, 60)
         for step in range(points_per_track):
             lon += np.random.normal(0, 2)
             lat += np.random.normal(0, 1.5)
-            # Wrap longitude around [-180, 180]
             lon = (lon + 180) % 360 - 180
             lat = np.clip(lat, -85, 85)
             data.append({
@@ -29,12 +27,11 @@ def generate_migration_tracks(num_species=4, points_per_track=100):
             })
     return pd.DataFrame(data)
 
+
 def generate_river_network():
     lines = []
-    # Main channel
-    coords = [(x, np.sin(x/10) * 5) for x in np.linspace(-100, 100, 50)]
+    coords = [(x, np.sin(x / 10) * 5) for x in np.linspace(-100, 100, 50)]
     lines.append(LineString(coords))
-    # Tributaries
     for i in range(5):
         start_idx = np.random.randint(10, 40)
         start_pt = coords[start_idx]
@@ -46,73 +43,119 @@ def generate_river_network():
         lines.append(LineString(trib_coords))
     return gpd.GeoDataFrame(geometry=lines)
 
+
 def generate_sst_grid():
+    """Create a climatology-like SST field using observed broad-scale patterns.
+
+    The field combines:
+    - a latitudinal temperature gradient that is warmest near the equator
+    - a zonal structure that makes eastern boundary upwelling regions cooler
+    - a modest warm anomaly in the western tropical Pacific and Atlantic
+    """
     lons = np.linspace(-180, 180, 180)
     lats = np.linspace(-90, 90, 90)
     lon_grid, lat_grid = np.meshgrid(lons, lats)
-    # Temperature decreases with absolute latitude, plus some noise/current patterns
-    sst = 30 * np.cos(np.radians(lat_grid)) - 2
-    sst += np.sin(lon_grid/20) * 3
+
+    # Baseline from latitude: warm tropics, cold poles
+    sst = 30 - 0.6 * np.abs(lat_grid)
+
+    # Stronger cooling in eastern boundary upwelling regions (e.g. Peru/California/Canary)
+    eastern_cooling = 6 * np.exp(-((lon_grid + 80) / 20) ** 2) + 5 * np.exp(-((lon_grid - 120) / 20) ** 2)
+    eastern_cooling += 4 * np.exp(-((lon_grid + 20) / 20) ** 2)
+
+    # Warm western tropical Pacific/Atlantic anomaly to mimic warm pool behavior
+    warm_pool = 2.2 * np.exp(-((lon_grid - 160) / 25) ** 2) * np.exp(-(lat_grid / 22) ** 2)
+    warm_pool += 1.5 * np.exp(-((lon_grid - 30) / 25) ** 2) * np.exp(-(lat_grid / 20) ** 2)
+
+    sst = sst - eastern_cooling + warm_pool
     sst = np.clip(sst, -2, 35)
     return lons, lats, sst
 
+
+def load_ocean_sst_data(data_dir="data", pattern="*.nc"):
+    """Load a local NetCDF SST dataset if present; otherwise fall back to the synthetic generator."""
+    search_dir = Path(data_dir)
+    if not search_dir.exists():
+        return generate_sst_grid()
+
+    candidates = sorted(search_dir.rglob(pattern))
+    for path in candidates:
+        try:
+            ds = xr.open_dataset(path)
+            if "sst" in ds.data_vars:
+                sst = ds["sst"].to_numpy()
+                lons = np.asarray(ds["lon"].to_numpy())
+                lats = np.asarray(ds["lat"].to_numpy())
+                if sst.ndim == 2:
+                    ds.close()
+                    return lons, lats, sst
+            ds.close()
+        except Exception as exc:
+            print(f"Ocean SST load failed for {path}: {exc}")
+
+    return generate_sst_grid()
+
+
 def generate_sea_ice_cycle(frames=12):
+    """Create a seasonal Arctic sea-ice cycle inspired by observed annual growth and melt.
+
+    The pattern uses a stronger northward ice edge in winter and a retreat in summer,
+    with a broad high-latitude band rather than a single sharp boundary.
+    """
     lons = np.linspace(-180, 180, 100)
     lats = np.linspace(50, 90, 50)
     lon_grid, lat_grid = np.meshgrid(lons, lats)
     cycles = []
+
     for f in range(frames):
         phase = 2 * np.pi * f / frames
-        # Extent varies sinusoidally
-        min_lat = 70 + 10 * np.sin(phase)
-        concentration = np.clip((lat_grid - min_lat) / (90 - min_lat) * 100, 0, 100)
+        # Seasonal ice edge follows a realistic annual cycle peaking in late winter.
+        min_lat = 70 + 9 * np.sin(phase - np.pi / 2)
+        edge_width = 8 + 3 * np.cos(phase)
+        ice_edge = (lat_grid - min_lat) / edge_width
+        concentration = np.clip(100 * (1 / (1 + np.exp(-ice_edge))) - 25, 0, 100)
+
+        # Add a modest longitudinal modulation to mimic basin differences.
+        basin_modulation = 8 * np.sin((lon_grid / 180) * np.pi + phase / 2)
+        concentration = np.clip(concentration + basin_modulation, 0, 100)
         cycles.append(concentration)
     return lons, lats, cycles
-def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gdb", layer="HydroRIVERS_v10", max_ord_flow=4):
-    """Load real HydroRIVERS global network from a File Geodatabase,
-    filtered to major rivers only (ORD_FLOW <= max_ord_flow) for renderable size.
-    Returns None if missing, so callers fall back to generate_river_network()."""
-    import os
-    import geopandas as gpd
 
-    path = os.path.join(data_dir, gbd_name)
-    if os.path.exists(path):
+
+def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gdb", layer="HydroRIVERS_v10", max_ord_flow=4):
+    """Load real HydroRIVERS global network from a File Geodatabase, filtered to major rivers only."""
+    path = Path(data_dir) / gbd_name
+    if path.exists():
         try:
-            gdf = gpd.read_file(path, layer=layer, where=f"ORD_FLOW <= {max_ord_flow}")
-            return gdf
-        except Exception as e:
-            print(f"HydroRIVERS load failed: {e}")
-            return None
+            return gpd.read_file(path, layer=layer, where=f"ORD_FLOW <= {max_ord_flow}")
+        except Exception as exc:
+            print(f"HydroRIVERS load failed: {exc}")
     return None
-import os
-import geopandas as gpd
+
 
 def load_river_network(shapefile_path="data/hydrorivers/HydroRIVERS_v10.shp", min_order=6):
     """Load real HydroRIVERS data; falls back to synthetic if missing."""
-    if not os.path.exists(shapefile_path):
+    if not Path(shapefile_path).exists():
         return generate_river_network()
     try:
         gdf = gpd.read_file(shapefile_path)
-        # ORD_FLOW: lower number = larger river. Filter to keep file/render size sane.
         if "ORD_FLOW" in gdf.columns:
             gdf = gdf[gdf["ORD_FLOW"] <= min_order]
         return gdf[["geometry"]]
     except Exception:
         return generate_river_network()
-def load_natural_earth(feature, data_dir="data/naturalearth/shapefiles/natural_earth/physical"):
-    """Load a local Natural Earth 110m shapefile. Returns None if not found,
-    so callers can fall back to cartopy's built-in cfeature instead."""
-    import os
-    import geopandas as gpd
 
-    path = os.path.join(data_dir, f"ne_110m_{feature}.shp")
-    if os.path.exists(path):
+
+def load_natural_earth(feature, data_dir="data/naturalearth/shapefiles/natural_earth/physical"):
+    """Load a local Natural Earth 110m shapefile. Returns None if not found."""
+    path = Path(data_dir) / f"ne_110m_{feature}.shp"
+    if path.exists():
         return gpd.read_file(path)
     return None
+
+
 def load_epic_image(date=None):
-    """Fetch a NASA EPIC full-disk Earth image metadata for a given date
-    (YYYY-MM-DD). Returns None on any failure so callers can keep using
-    the cartopy-rendered globe instead."""
+    """Fetch a NASA EPIC full-disk Earth image metadata for a given date."""
     import os
     import requests
     from dotenv import load_dotenv
@@ -131,12 +174,13 @@ def load_epic_image(date=None):
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
         return resp.json()
-    except Exception as e:
-        print(f"EPIC load failed: {e}")
+    except Exception as exc:
+        print(f"EPIC load failed: {exc}")
         return None
+
+
 def download_epic_image(entry, save_dir="data/epic_cache"):
-    """Download the actual PNG for one EPIC entry (from load_epic_image results).
-    Returns local file path, or None on failure."""
+    """Download the actual PNG for one EPIC entry."""
     import os
     import requests
     from dotenv import load_dotenv
@@ -150,21 +194,21 @@ def download_epic_image(entry, save_dir="data/epic_cache"):
     image_name = entry["image"]
     url = f"https://api.nasa.gov/EPIC/archive/natural/{date_str}/png/{image_name}.png"
 
-    os.makedirs(save_dir, exist_ok=True)
-    local_path = os.path.join(save_dir, f"{image_name}.png")
+    Path(save_dir).mkdir(parents=True, exist_ok=True)
+    local_path = Path(save_dir) / f"{image_name}.png"
 
     try:
         resp = requests.get(url, params={"api_key": api_key}, timeout=15)
         resp.raise_for_status()
-        with open(local_path, "wb") as f:
-            f.write(resp.content)
-        return local_path
-    except Exception as e:
-        print(f"EPIC image download failed: {e}")
+        local_path.write_bytes(resp.content)
+        return str(local_path)
+    except Exception as exc:
+        print(f"EPIC image download failed: {exc}")
         return None
+
+
 def list_movebank_studies(species_search=None):
-    """List Movebank studies accessible with current credentials.
-    Returns None on failure so callers can fall back to synthetic tracks."""
+    """List Movebank studies accessible with current credentials."""
     import os
     import requests
     from dotenv import load_dotenv
@@ -184,12 +228,13 @@ def list_movebank_studies(species_search=None):
         resp = requests.get(url, params=params, auth=(username, password), timeout=15)
         resp.raise_for_status()
         return resp.text
-    except Exception as e:
-        print(f"Movebank study list failed: {e}")
+    except Exception as exc:
+        print(f"Movebank study list failed: {exc}")
         return None
+
+
 def fetch_movebank_locations(study_id):
-    """Fetch real location data for a Movebank study.
-    Returns None on failure so callers fall back to synthetic tracks."""
+    """Fetch real location data for a Movebank study."""
     import os
     import requests
     from dotenv import load_dotenv
@@ -207,47 +252,6 @@ def fetch_movebank_locations(study_id):
         resp = requests.get(url, params=params, auth=(username, password), timeout=30)
         resp.raise_for_status()
         return resp.text
-    except Exception as e:
-        print(f"Movebank location fetch failed: {e}")
-        return None
-def fetch_movebank_locations(study_id):
-    """Fetch real location data for a Movebank study.
-    Returns None on failure so callers fall back to synthetic tracks."""
-    import os
-    import requests
-    from dotenv import load_dotenv
-
-    load_dotenv()
-    username = os.getenv("MOVEBANK_USERNAME")
-    password = os.getenv("MOVEBANK_PASSWORD")
-    if not username or not password:
-        return None
-
-    url = "https://www.movebank.org/movebank/service/direct-read"
-    params = {
-        "entity_type": "event",
-        "study_id": study_id,
-        "license-md5": "",  # first request: check if license acceptance needed
-    }
-
-    try:
-        resp = requests.get(url, params=params, auth=(username, password), timeout=30)
-        resp.raise_for_status()
-
-        # If Movebank returns the license HTML page, extract the md5 and re-request with acceptance
-        if resp.text.strip().startswith("<html>"):
-            import re
-            match = re.search(r'license-md5["\']?\s*[:=]\s*["\']?([a-f0-9]{32})', resp.text)
-            if match:
-                license_md5 = match.group(1)
-                params["license-md5"] = license_md5
-                resp = requests.get(url, params=params, auth=(username, password), timeout=30)
-                resp.raise_for_status()
-            else:
-                print("Could not find license-md5 in response")
-                return None
-
-        return resp.text
-    except Exception as e:
-        print(f"Movebank location fetch failed: {e}")
+    except Exception as exc:
+        print(f"Movebank location fetch failed: {exc}")
         return None

@@ -20,6 +20,7 @@ Updated after reviewing the repository implementation and generated output asset
 ## Week 3 — Climate visualizations
 
 - [x] Slide 4 — Ocean SST rendered
+- [x] Slide 4 — Local NetCDF SST loader added with synthetic fallback
 - [x] Slide 5 — Sea ice GIF rendered
 
 ## Week 4 — Dashboard + ship
