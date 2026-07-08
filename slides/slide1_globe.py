@@ -49,3 +49,27 @@ if __name__ == "__main__":
     import os
     os.makedirs("outputs", exist_ok=True)
     render_globe()
+def render_globe(output_path="outputs/slide1_globe.png", epic_output_path="outputs/slide1_epic.png"):
+    apply_dark_style()
+    fig = plt.figure(figsize=(8, 8), dpi=300)
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Orthographic(central_longitude=0, central_latitude=20))
+    
+    # ... (existing globe code unchanged) ...
+
+    plt.savefig(output_path, bbox_inches='tight', facecolor=BG_COLOR, dpi=300)
+    plt.close()
+
+    # Companion EPIC reference thumbnail
+    from utils.generators import load_epic_image, download_epic_image
+    entries = load_epic_image()
+    if entries:
+        img_path = download_epic_image(entries[-1])
+        if img_path:
+            fig2, ax2 = plt.subplots(figsize=(6, 6), dpi=200)
+            fig2.patch.set_facecolor(BG_COLOR)
+            img = plt.imread(img_path)
+            ax2.imshow(img)
+            ax2.axis('off')
+            ax2.set_title("NASA EPIC — Live Reference Photo", fontsize=11, color='#7df9ff', pad=10)
+            plt.savefig(epic_output_path, bbox_inches='tight', facecolor=BG_COLOR, dpi=200)
+            plt.close()

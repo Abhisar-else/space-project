@@ -103,7 +103,13 @@ if slide == "1. Earth Overview":
         with st.spinner("Rendering glowing Orthographic globe..."):
             render_globe(img_path)
             
-    st.image(img_path, use_column_width=True)
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.image(img_path, width='stretch')
+    epic_path = "outputs/slide1_epic.png"
+    if os.path.exists(epic_path):
+        with col2:
+            st.image(epic_path, width='stretch')
     
     st.markdown(
         """
@@ -124,7 +130,7 @@ elif slide == "2. Species Migration":
         with st.spinner("Plotting marine species tracks on Robinson projection..."):
             render_migration(img_path)
             
-    st.image(img_path, use_column_width=True)
+    st.image(img_path, width='stretch')
     
     st.markdown(
         """
@@ -145,7 +151,7 @@ elif slide == "3. River Veins":
         with st.spinner("Extracting global freshwater vascular structures..."):
             render_rivers(img_path)
             
-    st.image(img_path, use_column_width=True)
+    st.image(img_path, width='stretch')
     
     st.markdown(
         """
@@ -166,7 +172,7 @@ elif slide == "4. Ocean Currents":
         with st.spinner("Calculating Sea Surface Temperature contours & current vectors..."):
             render_ocean_sst(img_path)
             
-    st.image(img_path, use_column_width=True)
+    st.image(img_path, width='stretch')
     
     st.markdown(
         """
@@ -187,7 +193,7 @@ elif slide == "5. Sea Ice Cycle":
         with st.spinner("Generating and compiling polar freeze-thaw cycle animation..."):
             render_sea_ice_gif(gif_path)
             
-    st.image(gif_path, use_column_width=True)
+    st.image(gif_path, width='stretch')
     
     st.markdown(
         """

@@ -109,3 +109,56 @@ def load_natural_earth(feature, data_dir="data/naturalearth/shapefiles/natural_e
     if os.path.exists(path):
         return gpd.read_file(path)
     return None
+def load_epic_image(date=None):
+    """Fetch a NASA EPIC full-disk Earth image metadata for a given date
+    (YYYY-MM-DD). Returns None on any failure so callers can keep using
+    the cartopy-rendered globe instead."""
+    import os
+    import requests
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    api_key = os.getenv("NASA_API_KEY")
+    if not api_key:
+        return None
+
+    url = "https://api.nasa.gov/EPIC/api/natural"
+    params = {"api_key": api_key}
+    if date:
+        url += f"/date/{date}"
+
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"EPIC load failed: {e}")
+        return None
+def download_epic_image(entry, save_dir="data/epic_cache"):
+    """Download the actual PNG for one EPIC entry (from load_epic_image results).
+    Returns local file path, or None on failure."""
+    import os
+    import requests
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    api_key = os.getenv("NASA_API_KEY")
+    if not api_key or not entry:
+        return None
+
+    date_str = entry["date"].split(" ")[0].replace("-", "/")
+    image_name = entry["image"]
+    url = f"https://api.nasa.gov/EPIC/archive/natural/{date_str}/png/{image_name}.png"
+
+    os.makedirs(save_dir, exist_ok=True)
+    local_path = os.path.join(save_dir, f"{image_name}.png")
+
+    try:
+        resp = requests.get(url, params={"api_key": api_key}, timeout=15)
+        resp.raise_for_status()
+        with open(local_path, "wb") as f:
+            f.write(resp.content)
+        return local_path
+    except Exception as e:
+        print(f"EPIC image download failed: {e}")
+        return None
