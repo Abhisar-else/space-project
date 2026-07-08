@@ -29,14 +29,14 @@ Every dataset used, exactly where to get it, and what it feeds.
 
 | Source | Type | Access |
 |---|---|---|
-| Copernicus Marine GLORYS12V1 | Ocean reanalysis, 8km res, currents+SST+sea level | Free account, marine.copernicus.eu |
+| Copernicus Marine GLORYS12V1 | Ocean reanalysis, 8km res, currents+SST+sea level | Free account, marine.copernicus.eu; loader supports local NetCDF files in data/ |
 | NASA Aqua-MODIS | Chlorophyll-a / phytoplankton | oceancolor.gsfc.nasa.gov |
 
 ## Slide 5 — Sea ice
 
 | Source | Type | Access |
 |---|---|---|
-| NSIDC Sea Ice Index (CDR) | Monthly ice concentration grids, 1979–present | nsidc.org/data/G02202 |
+| NSIDC Sea Ice Index (CDR) | Monthly ice concentration grids, 1979–present | nsidc.org/data/G02202; loader supports local NetCDF files in data/ |
 | Copernicus GLORYS (siconc) | Alternative ice concentration source | marine.copernicus.eu |
 
 ## Notes

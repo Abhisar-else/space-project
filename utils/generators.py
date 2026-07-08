@@ -73,10 +73,9 @@ def generate_sst_grid():
 
 
 def load_ocean_sst_data(data_dir="data", pattern="*.nc"):
-    """Load a local NetCDF SST dataset if present; otherwise fall back to the synthetic generator."""
+    """Load a local NetCDF SST dataset if present; otherwise try a real Copernicus download and fall back gracefully."""
     search_dir = Path(data_dir)
-    if not search_dir.exists():
-        return generate_sst_grid()
+    search_dir.mkdir(parents=True, exist_ok=True)
 
     candidates = sorted(search_dir.rglob(pattern))
     for path in candidates:
@@ -93,7 +92,78 @@ def load_ocean_sst_data(data_dir="data", pattern="*.nc"):
         except Exception as exc:
             print(f"Ocean SST load failed for {path}: {exc}")
 
+    try:
+        import os
+        from dotenv import load_dotenv
+
+        load_dotenv()
+        username = os.getenv("COPERNICUS_USERNAME")
+        password = os.getenv("COPERNICUS_PASSWORD")
+        if username and password:
+            import subprocess
+            output_path = search_dir / "glorys_sst.nc"
+            cmd = [
+                "copernicusmarine",
+                "subset",
+                "--dataset-id",
+                "cmems_mod_glo_phy_my_0.083deg_P1D-m",
+                "--variable",
+                "thetao",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-01-02",
+                "--north",
+                "60",
+                "--south",
+                "-60",
+                "--east",
+                "180",
+                "--west",
+                "-180",
+                "--output-dir",
+                str(search_dir),
+                "--force-download",
+            ]
+            subprocess.run(cmd, check=False, capture_output=True, text=True)
+            if output_path.exists():
+                ds = xr.open_dataset(output_path)
+                if "thetao" in ds.data_vars:
+                    sst = ds["thetao"].mean(dim="depth", keep_attrs=True).to_numpy()
+                    lons = np.asarray(ds["longitude"].to_numpy())
+                    lats = np.asarray(ds["latitude"].to_numpy())
+                    if sst.ndim == 2:
+                        ds.close()
+                        return lons, lats, sst
+                ds.close()
+    except Exception as exc:
+        print(f"Copernicus SST download failed: {exc}")
+
     return generate_sst_grid()
+
+
+def load_sea_ice_data(data_dir="data", pattern="*.nc"):
+    """Load a local sea-ice NetCDF dataset if present; otherwise fall back to the synthetic sequence."""
+    search_dir = Path(data_dir)
+    search_dir.mkdir(parents=True, exist_ok=True)
+
+    candidates = sorted(search_dir.rglob(pattern))
+    for path in candidates:
+        try:
+            ds = xr.open_dataset(path)
+            for var_name in ("siconc", "sea_ice_fraction", "ice_conc"):
+                if var_name in ds.data_vars:
+                    data = ds[var_name].to_numpy()
+                    lons = np.asarray(ds["lon"].to_numpy()) if "lon" in ds.coords else np.linspace(-180, 180, data.shape[-1])
+                    lats = np.asarray(ds["lat"].to_numpy()) if "lat" in ds.coords else np.linspace(50, 90, data.shape[-2])
+                    if data.ndim >= 2:
+                        ds.close()
+                        return lons, lats, data
+            ds.close()
+        except Exception as exc:
+            print(f"Sea ice load failed for {path}: {exc}")
+
+    return generate_sea_ice_cycle()
 
 
 def generate_sea_ice_cycle(frames=12):
@@ -255,3 +325,145 @@ def fetch_movebank_locations(study_id):
     except Exception as exc:
         print(f"Movebank location fetch failed: {exc}")
         return None
+def load_movebank_migration(study_id=1027467132, data_dir="data/movebank"):
+    """Load real Movebank tracking data as a DataFrame matching the shape
+    generate_migration_tracks() produces. Falls back to None if unavailable."""
+    import io
+    import pandas as pd
+    from pathlib import Path
+
+    # Try local cached CSV first (from manual download or prior fetch)
+    cache_path = Path(data_dir) / f"study_{study_id}.csv"
+    if cache_path.exists():
+        try:
+            df = pd.read_csv(cache_path)
+        except Exception as exc:
+            print(f"Movebank cache read failed: {exc}")
+            df = None
+    else:
+        df = None
+
+    if df is None:
+        text = fetch_movebank_locations(study_id)
+        if not text:
+            return None
+        try:
+            df = pd.read_csv(io.StringIO(text))
+            Path(data_dir).mkdir(parents=True, exist_ok=True)
+            df.to_csv(cache_path, index=False)
+        except Exception as exc:
+            print(f"Movebank parse failed: {exc}")
+            return None
+
+    if not {"location_lat", "location_long", "individual_id", "timestamp"}.issubset(df.columns):
+        return None
+
+    out = pd.DataFrame({
+        "species": "blue_fin_whale_" + df["individual_id"].astype(str),
+        "longitude": df["location_long"],
+        "latitude": df["location_lat"],
+        "timestamp": pd.to_datetime(df["timestamp"]),
+    })
+    return out
+def load_movebank_migration(study_id=1027467132, data_dir="data/movebank"):
+    """Load real Movebank tracking data as a DataFrame matching the shape
+    generate_migration_tracks() produces. Falls back to None if unavailable."""
+    import io
+    import pandas as pd
+    from pathlib import Path
+
+    cache_path = Path(data_dir) / f"study_{study_id}.csv"
+    if cache_path.exists():
+        try:
+            df = pd.read_csv(cache_path)
+        except Exception as exc:
+            print(f"Movebank cache read failed: {exc}")
+            df = None
+    else:
+        df = None
+
+    if df is None:
+        text = fetch_movebank_locations(study_id)
+        if not text:
+            return None
+        try:
+            df = pd.read_csv(io.StringIO(text))
+            Path(data_dir).mkdir(parents=True, exist_ok=True)
+            df.to_csv(cache_path, index=False)
+        except Exception as exc:
+            print(f"Movebank parse failed: {exc}")
+            return None
+
+    if not {"location_lat", "location_long", "individual_id", "timestamp"}.issubset(df.columns):
+        return None
+
+    out = pd.DataFrame({
+        "species": "blue_fin_whale_" + df["individual_id"].astype(str),
+        "longitude": df["location_long"],
+        "latitude": df["location_lat"],
+        "timestamp": pd.to_datetime(df["timestamp"]),
+    })
+    return out
+def load_ocean_sst_data(data_dir="data", pattern="*.nc"):
+    """Load a local NetCDF SST dataset if present; otherwise fall back to the synthetic generator."""
+    search_dir = Path(data_dir)
+    if not search_dir.exists():
+        return generate_sst_grid()
+
+    candidates = sorted(search_dir.rglob(pattern))
+    for path in candidates:
+        try:
+            ds = xr.open_dataset(path)
+            # Support both generic "sst" and Copernicus GLORYS "thetao" variable names
+            var_name = "sst" if "sst" in ds.data_vars else ("thetao" if "thetao" in ds.data_vars else None)
+            if var_name:
+                data = ds[var_name]
+                # Select first timestep and surface depth layer if present
+                if "time" in data.dims:
+                    data = data.isel(time=0)
+                if "depth" in data.dims:
+                    data = data.isel(depth=0)
+                sst = data.to_numpy()
+                lat_name = "lat" if "lat" in ds.coords else "latitude"
+                lon_name = "lon" if "lon" in ds.coords else "longitude"
+                lons = np.asarray(ds[lon_name].to_numpy())
+                lats = np.asarray(ds[lat_name].to_numpy())
+                if sst.ndim == 2:
+                    ds.close()
+                    return lons, lats, sst
+            ds.close()
+        except Exception as exc:
+            print(f"Ocean SST load failed for {path}: {exc}")
+
+    return generate_sst_grid()
+def load_sea_ice_data(data_dir="data", pattern="*seaice*.nc"):
+    """Load real sea ice concentration frames from a local NetCDF file
+    (e.g. Copernicus GLORYS siconc). Falls back to the synthetic cycle if missing."""
+    search_dir = Path(data_dir)
+    if not search_dir.exists():
+        return generate_sea_ice_cycle()
+
+    candidates = sorted(search_dir.rglob(pattern))
+    for path in candidates:
+        try:
+            ds = xr.open_dataset(path)
+            if "siconc" in ds.data_vars:
+                data = ds["siconc"]
+                lat_name = "lat" if "lat" in ds.coords else "latitude"
+                lon_name = "lon" if "lon" in ds.coords else "longitude"
+                lons = np.asarray(ds[lon_name].to_numpy())
+                lats = np.asarray(ds[lat_name].to_numpy())
+
+                if "time" in data.dims:
+                    frames = [np.clip(data.isel(time=t).to_numpy() * 100, 0, 100) for t in range(data.sizes["time"])]
+                else:
+                    frames = [np.clip(data.to_numpy() * 100, 0, 100)]
+
+                if len(frames) > 0 and frames[0].ndim == 2:
+                    ds.close()
+                    return lons, lats, frames
+            ds.close()
+        except Exception as exc:
+            print(f"Sea ice load failed for {path}: {exc}")
+
+    return generate_sea_ice_cycle()

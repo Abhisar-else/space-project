@@ -21,22 +21,29 @@ def render_migration(output_path="outputs/slide2_migration.png"):
         ax.patch.set_facecolor(BG_COLOR)
     
     # Underlay simple dark land
-    ax.add_feature(cfeature.LAND, facecolor='#020c1b', edgecolor='none')
-    ax.add_feature(cfeature.COASTLINE, edgecolor='#001f3f', linewidth=0.3)
-    
+    from utils.generators import load_natural_earth
+    land_gdf = load_natural_earth("land")
+    if land_gdf is not None:
+        ax.add_geometries(land_gdf.geometry, crs=ccrs.PlateCarree(), facecolor='#020c1b', edgecolor='none')
+        ax.add_geometries(land_gdf.geometry, crs=ccrs.PlateCarree(), facecolor='none', edgecolor='#001f3f', linewidth=0.3)
+    else:
+        ax.add_feature(cfeature.LAND, facecolor='#020c1b', edgecolor='none')
+        ax.add_feature(cfeature.COASTLINE, edgecolor='#001f3f', linewidth=0.3)
     # Generate and plot migration paths
-    df = generate_migration_tracks()
+    from utils.generators import load_movebank_migration
+    df = load_movebank_migration()
+    if df is None:
+        df = generate_migration_tracks()
+    df = df.sort_values("timestamp")
     for species, group in df.groupby("species"):
-        color = SPECIES_COLORS.get(species, "#ffffff")
-        # Format label name
-        label_name = species.replace("_", " ").title()
+        group = group.sort_values("timestamp")
+        color = SPECIES_COLORS.get("blue_whale", "#00b4d8")
         ax.plot(group["longitude"], group["latitude"], transform=ccrs.PlateCarree(),
-                color=color, linewidth=1.5, alpha=0.8, label=label_name)
-        # Glowing endpoint
+                color=color, linewidth=3, alpha=0.15)
+        ax.plot(group["longitude"], group["latitude"], transform=ccrs.PlateCarree(),
+                color=color, linewidth=1, alpha=0.9)
         ax.scatter(group["longitude"].iloc[-1], group["latitude"].iloc[-1],
-                   transform=ccrs.PlateCarree(), color=color, s=20, edgecolors='#ffffff', zorder=5)
-    
-    ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=4, frameon=False, fontsize=8)
+                   transform=ccrs.PlateCarree(), color=color, s=15, edgecolors='#ffffff', zorder=5, linewidth=0.5)
     ax.set_title("SPECIES MIGRATION\nGlobal Animal Tracking & Migration Paths", fontsize=14, color='#e0e0e0', weight='bold', pad=15)
     
     plt.savefig(output_path, bbox_inches='tight', facecolor=BG_COLOR, dpi=300)

@@ -6,12 +6,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import imageio.v2 as imageio
+import numpy as np
 from utils.colors import BG_COLOR, ICE_NONE, ICE_PARTIAL, ICE_FULL, apply_dark_style
-from utils.generators import generate_sea_ice_cycle
+from utils.generators import generate_sea_ice_cycle, load_sea_ice_data
 
 def render_sea_ice_gif(output_path="outputs/slide5_seaice.gif"):
     apply_dark_style()
-    lons, lats, cycles = generate_sea_ice_cycle()
+    lons, lats, cycles = load_sea_ice_data()
+    if isinstance(cycles, np.ndarray):
+        cycles = [cycles]
     cmap = LinearSegmentedColormap.from_list("custom_ice", [ICE_NONE, ICE_PARTIAL, ICE_FULL])
     
     temp_dir = "temp_frames"
