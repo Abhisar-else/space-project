@@ -21,6 +21,14 @@ ICE_NONE = "#000814"
 ICE_PARTIAL = "#c6def1"
 ICE_FULL = "#ffffff"
 
+NDVI_LOW = "#40260a"
+NDVI_MID = "#c9a227"
+NDVI_HIGH = "#1b8a3c"
+
+TERRAIN_SHADOW = "#04070d"
+TERRAIN_MID = "#3d6a7d"
+TERRAIN_LIT = "#d6f3ff"
+
 def apply_dark_style():
     plt.rcParams.update({
         'figure.facecolor': BG_COLOR,

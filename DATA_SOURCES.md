@@ -39,6 +39,22 @@ Every dataset used, exactly where to get it, and what it feeds.
 | NSIDC Sea Ice Index (CDR) | Monthly ice concentration grids, 1979–present | nsidc.org/data/G02202; loader supports local NetCDF files in data/ |
 | Copernicus GLORYS (siconc) | Alternative ice concentration source | marine.copernicus.eu |
 
+## Slide 6 — Vegetation index (NDVI)
+
+| Source | Type | Access |
+|---|---|---|
+| Copernicus Sentinel-2 L2A | Red/NIR surface reflectance | Free account, dataspace.copernicus.eu |
+| USGS EarthExplorer (Landsat 8/9 C2 L2) | Red/NIR surface reflectance | Free account, earthexplorer.usgs.gov |
+
+## Slide 7 — Terrain & hillshade (GDAL)
+
+| Source | Type | Access |
+|---|---|---|
+| Copernicus GLO-30 DEM | 30m global elevation, direct download, no login | registry.opendata.aws/copernicus-dem |
+| USGS EarthExplorer / OpenTopography (SRTM) | 30m Digital Elevation Model | Free account |
+
+
+
 ## Notes
 
 - All sources are free and open — no paid API tiers required for this project scope.

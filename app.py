@@ -5,10 +5,11 @@ import os
 # Import the renderers from our slides package
 from slides.slide1_globe import render_globe
 from slides.slide2_migration import render_migration
-from slides.slide3_rivers import render_rivers
+from slides.slide3_rivers import build_river_globe
 from slides.slide4_ocean import render_ocean_sst
 from slides.slide5_seaice import render_sea_ice_gif
-
+from slides.slide6_ndvi import render_ndvi
+from slides.slide7_terrain import render_terrain 
 # Configure Streamlit page layout and dark aesthetics
 st.set_page_config(
     page_title="Water Body: Earth Systems Data Art",
@@ -74,14 +75,16 @@ st.write("Inspired by the *Water Body* installation (ARTIS Amsterdam Royal Zoo, 
 # Sidebar navigation
 st.sidebar.title("Navigation")
 st.sidebar.write("Choose a scientific dataset slide to visualize:")
-slide = st.sidebar.radio(
+slide = st.sidebar.selectbox(
     "Visualizations:",
     [
         "1. Earth Overview",
         "2. Species Migration",
         "3. River Veins",
         "4. Ocean Currents",
-        "5. Sea Ice Cycle"
+        "5. Sea Ice Cycle",
+        "6. Vegetation Index",
+        "7. Terrain & Hillshade"
     ]
 )
 
@@ -148,22 +151,20 @@ elif slide == "2. Species Migration":
     )
 
 elif slide == "3. River Veins":
-    st.subheader("3. River Veins — WWF HydroRIVERS")
-    gif_path = "outputs/slide3_rivers.gif"
+    st.subheader("3. River Veins — Global HydroRIVERS Network")
 
-    if not os.path.exists(gif_path):
-        with st.spinner("Animating river flow pulses..."):
-            from slides.slide3_rivers import render_rivers_animated
-            render_rivers_animated(gif_path)
+    with st.spinner("Building interactive globe..."):
+        river_fig = build_river_globe()
 
-    st.image(gif_path, width='stretch')
+    st.plotly_chart(river_fig, width='stretch')
+    st.caption("Drag to rotate · scroll or pinch to zoom — no auto-rotation.")
 
     st.markdown(
         """
         <div class="citation-box">
             <h4>Data Attribution & Source Details</h4>
             <p><b>Data Sources:</b> Global river network geometry from the WWF HydroSHEDS / HydroRIVERS database.</p>
-            <p><b>Visual Concept:</b> Depicts rivers as animated neon vascular veins with a pulsing glow simulating flow, showing pathways across major basins.</p>
+            <p><b>Visual Concept:</b> The full river network on an interactive orthographic globe — every basin, not a cropped strip — glowing cyan against the deep-space backdrop.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -206,6 +207,40 @@ elif slide == "5. Sea Ice Cycle":
             <h4>Data Attribution & Source Details</h4>
             <p><b>Data Sources:</b> NOAA/NSIDC Sea Ice Concentration Climate Data Record (CDR).</p>
             <p><b>Visual Concept:</b> A cyclic polar visual showing the monthly extent of sea ice freeze (full white) and thaw (deep space navy) boundaries around the Arctic circle over a full year.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+elif slide == "6. Vegetation Index":
+    st.subheader("6. Vegetation Index — Rasterio NDVI")
+    img_path = "outputs/slide6_ndvi.png"
+    if not os.path.exists(img_path):
+        with st.spinner("Computing NDVI from raster bands..."):
+            render_ndvi(img_path)
+    st.image(img_path, width='stretch')
+    st.markdown(
+        """
+        <div class="citation-box">
+            <h4>Data Attribution & Source Details</h4>
+            <p><b>Data Sources:</b> Rasterio-read Sentinel-2/Landsat red & near-infrared band rasters (or precomputed NDVI GeoTIFF).</p>
+            <p><b>Visual Concept:</b> Normalized Difference Vegetation Index, colored bare-soil brown through dense-canopy green.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+elif slide == "7. Terrain & Hillshade":
+    st.subheader("7. Terrain & Hillshade — GDAL DEM Processing")
+    img_path = "outputs/slide7_terrain.png"
+    if not os.path.exists(img_path):
+        with st.spinner("Computing hillshade from elevation model..."):
+            render_terrain(img_path)
+    st.image(img_path, width='stretch')
+    st.markdown(
+        """
+        <div class="citation-box">
+            <h4>Data Attribution & Source Details</h4>
+            <p><b>Data Sources:</b> GDAL-processed Digital Elevation Model (SRTM 30m, or any GDAL-readable DEM raster).</p>
+            <p><b>Visual Concept:</b> Hillshade relief computed via <code>gdaldem hillshade</code>, simulating sun illumination (altitude 45°, azimuth 315°) across terrain slope and aspect.</p>
         </div>
         """,
         unsafe_allow_html=True

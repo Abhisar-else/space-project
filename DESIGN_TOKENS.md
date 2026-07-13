@@ -52,3 +52,12 @@ Mirror these values in `utils/colors.py` — don't hardcode hex in slide scripts
 | 3 — Rivers | 16:9 | (16, 9) |
 | 4 — Ocean SST | 2:1 | (14, 7) |
 | 5 — Sea ice | 1:1 | (6, 6) |
+### Vegetation index (NDVI)
+- Bare/sparse (-1): `#40260a`
+- Transitional (0): `#c9a227`
+- Dense canopy (+1): `#1b8a3c`
+
+### Terrain / hillshade
+- Shadow: `#04070d`
+- Mid-slope: `#3d6a7d`
+- Sunlit: `#d6f3ff`

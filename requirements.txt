@@ -12,4 +12,6 @@ shapely
 pyproj
 requests
 streamlit
--dotenv
+python-dotenv
+rasterio 
+ploty

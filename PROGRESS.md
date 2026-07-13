@@ -31,7 +31,14 @@ Updated after reviewing the repository implementation and generated output asset
 - [x] Local dashboard verified through the Streamlit app
 - [ ] EONET live layer added (optional stretch)
 - [x] README created and populated with project overview and docs
-- [ ] Pushed to GitHub
+- [x] Pushed to GitHub   <!-- confirmed live, was unchecked -->
+## Week 5 — GIS toolkit additions
+- [x] Fixed duplicate function defs in utils/generators.py
+- [x] Fixed broken requirements.txt (-dotenv typo)
+- [x] Slide 6 — Rasterio NDVI demo (synthetic fallback) built + wired into app.py
+- [ ] Real Sentinel-2/Landsat NDVI integration
+- [ ] Slide 7 — GDAL DEM/hillshade demo
+- [ ] git rm reqirments.txt + untrack outputs/
 - [ ] Deployed on Streamlit Community Cloud
 
 ## Verification notes
