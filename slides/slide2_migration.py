@@ -1,7 +1,8 @@
 # slides/slide2_migration.py
 import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -37,7 +38,7 @@ def render_migration(output_path="outputs/slide2_migration.png"):
     df = df.sort_values("timestamp")
     for species, group in df.groupby("species"):
         group = group.sort_values("timestamp")
-        color = SPECIES_COLORS.get("blue_whale", "#00b4d8")
+        color = next((c for k, c in SPECIES_COLORS.items() if k in species), "#00b4d8")
         ax.plot(group["longitude"], group["latitude"], transform=ccrs.PlateCarree(),
                 color=color, linewidth=3, alpha=0.15)
         ax.plot(group["longitude"], group["latitude"], transform=ccrs.PlateCarree(),

@@ -31,7 +31,7 @@ def generate_migration_tracks(num_species=4, points_per_track=100):
 def generate_river_network():
     """Synthetic global river network: several wandering polylines anchored at
     roughly plausible real-world river locations (approximate, not real geometry —
-    a stand-in until load_hydrorivers()/load_river_network() has real data),
+    a stand-in until load_hydrorivers() has real data),
     each with a couple of tributaries, spread across every continent."""
     river_anchors = [
         ((-50, 0), (-70, -6)),      # Amazon-ish (South America)
@@ -183,36 +183,31 @@ def compute_hillshade(elevation, azimuth=315, altitude=45, cell_size=1.0):
 
 
 def load_dem_hillshade(data_dir="data/gdal", pattern="*.tif"):
-    """Load a real DEM GeoTIFF and shell out to `gdaldem hillshade`. Falls back to
-    a synthetic terrain + numpy hillshade if no real DEM or gdaldem is available."""
-    import shutil
-    import subprocess
-
+    """Load a DEM GeoTIFF and hillshade via compute_hillshade. Falls back to synthetic terrain."""
     search_dir = Path(data_dir)
-    if search_dir.exists() and shutil.which("gdaldem"):
+    if search_dir.exists():
         for dem_path in sorted(search_dir.rglob(pattern)):
+            if dem_path.stem.endswith("_hillshade"):
+                continue
             try:
-                out_path = dem_path.with_name(dem_path.stem + "_hillshade.tif")
-                subprocess.run(
-                    ["gdaldem", "hillshade", str(dem_path), str(out_path),
-                     "-az", "315", "-alt", "45", "-q"],
-                    check=True, capture_output=True, text=True,
-                )
                 import rasterio
-                with rasterio.open(out_path) as src:
-                    shaded = src.read(1).astype("float64") / 255.0
+                with rasterio.open(dem_path) as src:
+                    elevation = src.read(1).astype("float64")
                     bounds = src.bounds
-                    lons = np.linspace(bounds.left, bounds.right, shaded.shape[1])
-                    lats = np.linspace(bounds.bottom, bounds.top, shaded.shape[0])
-                    return lons, lats, shaded
+                    cell_size = abs(src.transform.a) or 1.0
+                shaded = compute_hillshade(elevation, cell_size=cell_size)
+                lons = np.linspace(bounds.left, bounds.right, shaded.shape[1])
+                lats = np.linspace(bounds.bottom, bounds.top, shaded.shape[0])
+                return lons, lats, shaded
             except Exception as exc:
-                print(f"gdaldem hillshade failed for {dem_path}: {exc}")
+                print(f"DEM load failed for {dem_path}: {exc}")
 
     elevation = generate_terrain_grid()
     shaded = compute_hillshade(elevation)
     lons = np.linspace(-1, 1, elevation.shape[1])
     lats = np.linspace(-1, 1, elevation.shape[0])
     return lons, lats, shaded
+
 
 def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gdb", layer="HydroRIVERS_v10", max_ord_flow=4):
     """Load real HydroRIVERS global network from a File Geodatabase, filtered to major rivers only."""
@@ -223,19 +218,6 @@ def load_hydrorivers(data_dir="data/hydrorivers", gbd_name="HydroRIVERS_v10.gdb"
         except Exception as exc:
             print(f"HydroRIVERS load failed: {exc}")
     return None
-
-
-def load_river_network(shapefile_path="data/hydrorivers/HydroRIVERS_v10.shp", min_order=6):
-    """Load real HydroRIVERS data; falls back to synthetic if missing."""
-    if not Path(shapefile_path).exists():
-        return generate_river_network()
-    try:
-        gdf = gpd.read_file(shapefile_path)
-        if "ORD_FLOW" in gdf.columns:
-            gdf = gdf[gdf["ORD_FLOW"] <= min_order]
-        return gdf[["geometry"]]
-    except Exception:
-        return generate_river_network()
 
 
 def load_natural_earth(feature, data_dir="data/naturalearth/shapefiles/natural_earth/physical"):
@@ -296,32 +278,6 @@ def download_epic_image(entry, save_dir="data/epic_cache"):
         return str(local_path)
     except Exception as exc:
         print(f"EPIC image download failed: {exc}")
-        return None
-
-
-def list_movebank_studies(species_search=None):
-    """List Movebank studies accessible with current credentials."""
-    import os
-    import requests
-    from dotenv import load_dotenv
-
-    load_dotenv()
-    username = os.getenv("MOVEBANK_USERNAME")
-    password = os.getenv("MOVEBANK_PASSWORD")
-    if not username or not password:
-        return None
-
-    url = "https://www.movebank.org/movebank/service/direct-read"
-    params = {"entity_type": "study"}
-    if species_search:
-        params["i_can_see_data"] = "true"
-
-    try:
-        resp = requests.get(url, params=params, auth=(username, password), timeout=15)
-        resp.raise_for_status()
-        return resp.text
-    except Exception as exc:
-        print(f"Movebank study list failed: {exc}")
         return None
 
 

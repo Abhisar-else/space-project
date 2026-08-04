@@ -1,14 +1,17 @@
 # slides/slide5_seaice.py
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import imageio.v2 as imageio
 import numpy as np
 from utils.colors import BG_COLOR, ICE_NONE, ICE_PARTIAL, ICE_FULL, apply_dark_style
-from utils.generators import generate_sea_ice_cycle, load_sea_ice_data
+from utils.generators import load_sea_ice_data
 
 def render_sea_ice_gif(output_path="outputs/slide5_seaice.gif"):
     apply_dark_style()
@@ -57,6 +60,5 @@ def render_sea_ice_gif(output_path="outputs/slide5_seaice.gif"):
         pass
 
 if __name__ == "__main__":
-    import os
     os.makedirs("outputs", exist_ok=True)
     render_sea_ice_gif()

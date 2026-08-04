@@ -1,7 +1,8 @@
 # slides/slide4_ocean.py
 import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap

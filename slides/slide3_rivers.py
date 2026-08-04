@@ -1,7 +1,10 @@
 # slides/slide3_rivers.py
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import matplotlib.pyplot as plt
 from utils.colors import BG_COLOR, RIVER_GLOW, RIVER_CORE, apply_dark_style
@@ -157,7 +160,6 @@ def build_river_globe(max_ord_flow=3, simplify_tolerance=0.03):
     )
     return fig
 if __name__ == "__main__":
-    import os
     os.makedirs("outputs", exist_ok=True)
     render_rivers()
 

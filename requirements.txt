@@ -3,9 +3,7 @@ cartopy
 geopandas
 xarray
 netCDF4
-cmocean
 imageio
-scipy
 pandas
 numpy
 shapely
@@ -14,4 +12,4 @@ requests
 streamlit
 python-dotenv
 rasterio 
-ploty
+plotly
