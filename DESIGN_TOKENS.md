@@ -61,3 +61,7 @@ Mirror these values in `utils/colors.py` — don't hardcode hex in slide scripts
 - Shadow: `#04070d`
 - Mid-slope: `#3d6a7d`
 - Sunlit: `#d6f3ff`
+
+### Satellites
+- Satellite marker: `#ffe066`
+- Orbit trace: `#ff9f1c`

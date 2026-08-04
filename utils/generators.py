@@ -62,6 +62,81 @@ def generate_river_network():
                 ))
             lines.append(LineString(trib))
     return gpd.GeoDataFrame(geometry=lines, crs="EPSG:4326")
+
+def load_satellite_positions(group="stations", track_minutes=30, step_minutes=3, max_age_days=14):
+    """Fetch real satellite positions from CelesTrak and return current subpoints.
+
+    If the CelesTrak fetch fails or the TLE epoch looks stale, return None so
+    the app can fall back to the synthetic generator.
+    """
+    try:
+        from skyfield.api import load
+
+        cache_dir = Path("data/satellites")
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        url = f"https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle"
+        ts = load.timescale()
+        tle_path = cache_dir / f"{group}.tle"
+        satellites = load.tle_file(url, filename=str(tle_path), reload=True, ts=ts)
+        if not satellites:
+            return None
+
+        now = ts.now()
+        rows = []
+        for sat in satellites:
+            # skyfield `Time` object supports subtraction producing a TimeDelta-like
+            # value; use total_seconds/86400 for robust day-age calculation.
+            try:
+                age_days = float((now - sat.epoch).total_seconds() / 86400.0)
+            except Exception:
+                age_days = float((now - sat.epoch).days)
+            if age_days > max_age_days:
+                continue
+            subpoint = sat.at(now).subpoint()
+            track = []
+            for minute in range(0, track_minutes + 1, step_minutes):
+                point = sat.at(now + minute / 1440.0).subpoint()
+                track.append((point.longitude.degrees, point.latitude.degrees))
+            rows.append({
+                "name": sat.name,
+                "lon": subpoint.longitude.degrees,
+                "lat": subpoint.latitude.degrees,
+                "alt_km": subpoint.elevation.km,
+                "track": track,
+            })
+
+        if not rows:
+            return None
+        return pd.DataFrame(rows)
+    except Exception as exc:
+        print(f"Satellite position load failed: {exc}")
+        return None
+
+def generate_satellite_positions(n=8, track_minutes=30, step_minutes=3):
+    """Generate a small synthetic LEO fleet when real TLE data cannot be fetched."""
+    rng = np.random.default_rng(11)
+    rows = []
+    for i in range(n):
+        inclination = rng.uniform(30, 98)
+        phase0 = rng.uniform(0, 360)
+        alt_km = rng.uniform(400, 750)
+        period_min = 90 + (alt_km - 400) / 10
+
+        def orbit_point(minute, incl=inclination, base=phase0, period=period_min):
+            theta = np.radians((base + (360.0 * minute / period)) % 360)
+            lat = inclination * np.sin(theta)
+            lon = ((base + 1.3 * 360.0 * minute / period) % 360) - 180
+            return lon, lat
+
+        rows.append({
+            "name": f"SYNTH-SAT-{i + 1}",
+            "lon": orbit_point(0)[0],
+            "lat": orbit_point(0)[1],
+            "alt_km": alt_km,
+            "track": [orbit_point(m) for m in range(0, track_minutes + 1, step_minutes)],
+        })
+    return pd.DataFrame(rows)
+
 def generate_sst_grid():
     """Create a climatology-like SST field using observed broad-scale patterns.
 

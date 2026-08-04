@@ -9,7 +9,8 @@ from slides.slide3_rivers import build_river_globe
 from slides.slide4_ocean import render_ocean_sst
 from slides.slide5_seaice import render_sea_ice_gif
 from slides.slide6_ndvi import render_ndvi
-from slides.slide7_terrain import render_terrain 
+from slides.slide7_terrain import render_terrain
+from slides.slide8_satellites import build_satellite_globe
 # Configure Streamlit page layout and dark aesthetics
 st.set_page_config(
     page_title="Water Body: Earth Systems Data Art",
@@ -17,6 +18,31 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Caching wrappers for expensive slide builds and file generation
+@st.cache_data(ttl=600)
+def _cached_build_river_globe():
+    return build_river_globe()
+
+
+@st.cache_data(ttl=300)
+def _cached_build_satellite_globe():
+    return build_satellite_globe()
+
+
+@st.cache_data(ttl=3600)
+def _cached_render_migration(img_path: str):
+    if not os.path.exists(img_path):
+        render_migration(img_path)
+    return img_path
+
+
+@st.cache_data(ttl=3600)
+def _cached_render_globe_animation(gif_path: str):
+    if not os.path.exists(gif_path):
+        from slides.slide1_globe import render_globe_animation
+        render_globe_animation(gif_path)
+    return gif_path
 
 # Custom CSS styling for an art-installation premium look (dark theme, cyan highlights)
 st.markdown(
@@ -84,7 +110,8 @@ slide = st.sidebar.selectbox(
         "4. Ocean Currents",
         "5. Sea Ice Cycle",
         "6. Vegetation Index",
-        "7. Terrain & Hillshade"
+        "7. Terrain & Hillshade",
+        "8. Satellite Tracking"
     ]
 )
 
@@ -104,8 +131,7 @@ if slide == "1. Earth Overview":
     gif_path = "outputs/slide1_globe_rotation.gif"
     if not os.path.exists(gif_path):
         with st.spinner("Rendering globe rotation..."):
-            from slides.slide1_globe import render_globe_animation
-            render_globe_animation(gif_path)
+            _cached_render_globe_animation(gif_path)
 
     epic_path = "outputs/slide1_epic.png"
     if not os.path.exists(epic_path):
@@ -135,7 +161,7 @@ elif slide == "2. Species Migration":
     
     if not os.path.exists(img_path):
         with st.spinner("Plotting marine species tracks on Robinson projection..."):
-            render_migration(img_path)
+            _cached_render_migration(img_path)
             
     st.image(img_path, width='stretch')
     
@@ -154,7 +180,7 @@ elif slide == "3. River Veins":
     st.subheader("3. River Veins — Global HydroRIVERS Network")
 
     with st.spinner("Building interactive globe..."):
-        river_fig = build_river_globe()
+        river_fig = _cached_build_river_globe()
 
     st.plotly_chart(river_fig, width='stretch')
     st.caption("Drag to rotate · scroll or pinch to zoom — no auto-rotation.")
@@ -241,6 +267,22 @@ elif slide == "7. Terrain & Hillshade":
             <h4>Data Attribution & Source Details</h4>
             <p><b>Data Sources:</b> GDAL-processed Digital Elevation Model (SRTM 30m, or any GDAL-readable DEM raster).</p>
             <p><b>Visual Concept:</b> Hillshade relief computed via <code>gdaldem hillshade</code>, simulating sun illumination (altitude 45°, azimuth 315°) across terrain slope and aspect.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+elif slide == "8. Satellite Tracking":
+    st.subheader("8. Satellite Tracking — Live Orbital Positions")
+    satellite_fig = _cached_build_satellite_globe()
+    st.plotly_chart(satellite_fig, width='stretch')
+    st.caption("Drag to rotate · scroll or pinch to zoom.")
+    st.markdown(
+        """
+        <div class="citation-box">
+            <h4>Data Attribution & Source Details</h4>
+            <p><b>Data Sources:</b> CelesTrak orbital element sets (TLE) propagated with Skyfield SGP4 mechanics.</p>
+            <p><b>Visual Concept:</b> Current low-Earth satellites shown as glowing markers with their forward ground tracks traced around the globe.</p>
         </div>
         """,
         unsafe_allow_html=True

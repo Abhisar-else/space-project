@@ -40,6 +40,10 @@ Updated after reviewing the repository implementation and generated output asset
 - [ ] Slide 7 — GDAL DEM/hillshade demo
 - [ ] git rm reqirments.txt + untrack outputs/
 - [ ] Deployed on Streamlit Community Cloud
+ - [x] Slide 8 — Satellite Tracking implemented with `skyfield` and synthetic fallback
+ - [x] `requirements.txt` updated to include `skyfield`
+ - [x] Add Streamlit caching wrappers for interactive slides
+ - [x] Run tests and verify imports (5 passed)
 
 ## Verification notes
 
