@@ -34,3 +34,7 @@ outputs/
 graphify-out/
 *.graphml
 *.svg
+
+# Local skill helper files
+skills/
+
