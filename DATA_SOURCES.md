@@ -55,6 +55,12 @@ Every dataset used, exactly where to get it, and what it feeds.
 
 
 
+## Slide 8 — Satellite tracking
+
+| Source | Type | Access |
+|---|---|---|
+| CelesTrak | Live orbital element sets (TLE) | Free, no account — celestrak.org/NORAD/elements/gp.php |
+
 ## Notes
 
 - All sources are free and open — no paid API tiers required for this project scope.
@@ -62,5 +68,4 @@ Every dataset used, exactly where to get it, and what it feeds.
   from the data owner — apply early, this can take a few days.
 - Copernicus Marine and NASA Earthdata both use OAuth-style tokens — store
   credentials in a local `.env` file, never commit them.
- - CelesTrak / TLEs: no credentials required; accessed via HTTP by `utils/generators.load_satellite_positions()` which falls back to synthetic positions when offline.
- - Add `SKYFIELD` and `sgp4` to `requirements.txt` to enable satellite propagation.
+- Add `SKYFIELD` and `sgp4` to `requirements.txt` to enable satellite propagation.

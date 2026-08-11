@@ -38,18 +38,12 @@ Updated after reviewing the repository implementation and generated output asset
 - [x] Slide 6 — Rasterio NDVI demo (synthetic fallback) built + wired into app.py
 - [ ] Real Sentinel-2/Landsat NDVI integration
 - [ ] Slide 7 — GDAL DEM/hillshade demo
-- [ ] git rm reqirments.txt + untrack outputs/
+- [x] git rm reqirments.txt + untrack outputs/
 - [ ] Deployed on Streamlit Community Cloud
- - [x] Slide 8 — Satellite Tracking implemented with `skyfield` and synthetic fallback
- - [x] `requirements.txt` updated to include `skyfield`
- - [x] Add Streamlit caching wrappers for interactive slides
- - [x] Run tests and verify imports (5 passed)
-
-## Verification notes
-
-- Reviewed implementation in app.py, utils/colors.py, utils/generators.py, slides/slide1_globe.py, slides/slide2_migration.py, slides/slide3_rivers.py, slides/slide4_ocean.py, and slides/slide5_seaice.py.
-- Confirmed output artifacts exist in outputs/ for slides 1–5.
-- Verified the latest climate-slide render command completed successfully.
+- [x] Slide 8 — Satellite Tracking implemented with `skyfield` and synthetic fallback
+- [x] `requirements.txt` updated to include `skyfield`
+- [x] Add Streamlit caching wrappers for interactive slides
+- [x] Run tests and verify imports (5 passed)
 
 ## Blockers / notes
 

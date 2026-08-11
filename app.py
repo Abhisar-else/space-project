@@ -3,8 +3,8 @@ import streamlit as st
 import os
 
 # Import the renderers from our slides package
-from slides.slide1_globe import render_globe
-from slides.slide2_migration import render_migration
+from slides.slide1_globe import build_earth_globe, render_epic_thumbnail
+from slides.slide2_migration import build_migration_globe
 from slides.slide3_rivers import build_river_globe
 from slides.slide4_ocean import render_ocean_sst
 from slides.slide5_seaice import render_sea_ice_gif
@@ -30,19 +30,14 @@ def _cached_build_satellite_globe():
     return build_satellite_globe()
 
 
-@st.cache_data(ttl=3600)
-def _cached_render_migration(img_path: str):
-    if not os.path.exists(img_path):
-        render_migration(img_path)
-    return img_path
+@st.cache_data(show_spinner=False)
+def _cached_earth_globe():
+    return build_earth_globe()
 
 
-@st.cache_data(ttl=3600)
-def _cached_render_globe_animation(gif_path: str):
-    if not os.path.exists(gif_path):
-        from slides.slide1_globe import render_globe_animation
-        render_globe_animation(gif_path)
-    return gif_path
+@st.cache_data(show_spinner=False)
+def _cached_migration_globe():
+    return build_migration_globe()
 
 # Custom CSS styling for an art-installation premium look (dark theme, cyan highlights)
 st.markdown(
@@ -127,20 +122,17 @@ os.makedirs("outputs", exist_ok=True)
 # Render chosen slide
 if slide == "1. Earth Overview":
     st.subheader("1. Earth Overview — Natural Earth & NASA EPIC")
-
-    gif_path = "outputs/slide1_globe_rotation.gif"
-    if not os.path.exists(gif_path):
-        with st.spinner("Rendering globe rotation..."):
-            _cached_render_globe_animation(gif_path)
+    earth_fig = _cached_earth_globe()
 
     epic_path = "outputs/slide1_epic.png"
     if not os.path.exists(epic_path):
         with st.spinner("Fetching NASA EPIC reference photo..."):
-            render_globe("outputs/slide1_globe.png", epic_path)
+            render_epic_thumbnail(epic_path)
 
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.image(gif_path, width='stretch')
+        st.plotly_chart(earth_fig, width='stretch')
+        st.caption("Drag to rotate · scroll or pinch to zoom — no auto-rotation.")
     with col2:
         if os.path.exists(epic_path):
             st.image(epic_path, width='stretch')
@@ -149,22 +141,18 @@ if slide == "1. Earth Overview":
         """
         <div class="citation-box">
             <h4>Data Attribution & Source Details</h4>
-            <p><b>Data Sources:</b> Natural Earth Vector boundaries (coastlines/land features) & NASA DSCOVR EPIC Full-Disk Earth camera.</p>
-            <p><b>Visual Concept:</b> A rotating planet view highlighting the ocean surface boundaries using a glowing cyan outline against deep space.</p>
+            <p><b>Data Sources:</b> Natural Earth boundary data (via Plotly's built-in world atlas) & NASA DSCOVR EPIC Full-Disk Earth camera.</p>
+            <p><b>Visual Concept:</b> An interactive planet view highlighting ocean surface boundaries using a glowing cyan outline against deep space.</p>
         </div>
         """,
         unsafe_allow_html=True
     )
 elif slide == "2. Species Migration":
     st.subheader("2. Species Migration — Movebank & OBIS-SEAMAP")
-    img_path = "outputs/slide2_migration.png"
-    
-    if not os.path.exists(img_path):
-        with st.spinner("Plotting marine species tracks on Robinson projection..."):
-            _cached_render_migration(img_path)
-            
-    st.image(img_path, width='stretch')
-    
+    migration_fig = _cached_migration_globe()
+    st.plotly_chart(migration_fig, width='stretch')
+    st.caption("Drag to rotate · scroll or pinch to zoom — no auto-rotation.")
+
     st.markdown(
         """
         <div class="citation-box">

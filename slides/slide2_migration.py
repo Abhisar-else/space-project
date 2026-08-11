@@ -50,6 +50,58 @@ def render_migration(output_path="outputs/slide2_migration.png"):
     plt.savefig(output_path, bbox_inches='tight', facecolor=BG_COLOR, dpi=300)
     plt.close()
 
+
+def build_migration_globe():
+    """Interactive orthographic globe of species migration tracks. Tries real
+    Movebank data first, falls back to synthetic — same contract as every
+    other loader in utils/generators.py."""
+    import plotly.graph_objects as go
+    from utils.colors import BG_COLOR, DEEP_OCEAN, SPECIES_COLORS
+    from utils.generators import load_movebank_migration, generate_migration_tracks
+
+    df = load_movebank_migration()
+    if df is None:
+        df = generate_migration_tracks()
+
+    fig = go.Figure()
+    for species, group in df.groupby("species"):
+        color = SPECIES_COLORS.get(species, "#ffffff")
+        label = species.replace("_", " ").title()
+        fig.add_trace(go.Scattergeo(
+            lon=group["longitude"], lat=group["latitude"],
+            mode="lines", line=dict(width=1.5, color=color), opacity=0.85,
+            name=label, hoverinfo="name",
+        ))
+        fig.add_trace(go.Scattergeo(
+            lon=[group["longitude"].iloc[-1]], lat=[group["latitude"].iloc[-1]],
+            mode="markers", marker=dict(size=7, color=color, line=dict(width=1, color="white")),
+            name=label, showlegend=False, hoverinfo="skip",
+        ))
+
+    fig.update_geos(
+        projection_type="orthographic",
+        projection_rotation=dict(lon=0, lat=20, roll=0),
+        showland=True, landcolor="#020c1b",
+        showocean=True, oceancolor=DEEP_OCEAN,
+        showcountries=False,
+        showcoastlines=True, coastlinecolor="rgba(0, 31, 63, 0.8)",
+        showframe=False, bgcolor=BG_COLOR,
+        lataxis_showgrid=False, lonaxis_showgrid=False,
+    )
+    fig.update_layout(
+        paper_bgcolor=BG_COLOR,
+        legend=dict(font=dict(color="#e0e0e0"), orientation="h", y=-0.05, x=0.5, xanchor="center"),
+        margin=dict(l=0, r=0, t=50, b=0),
+        title=dict(
+            text="SPECIES MIGRATION — Global Animal Tracking<br>"
+                 "<sub style='color:#888'>drag to rotate · scroll to zoom</sub>",
+            font=dict(color="#e0e0e0", size=18), x=0.5,
+        ),
+        height=700,
+    )
+    return fig
+
+
 if __name__ == "__main__":
     import os
     os.makedirs("outputs", exist_ok=True)

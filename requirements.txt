@@ -11,6 +11,8 @@ pyproj
 requests
 streamlit
 python-dotenv
-rasterio 
+rasterio
 plotly
 skyfield
+sgp4
+copernicusmarine

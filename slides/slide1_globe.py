@@ -106,6 +106,61 @@ def render_globe_animation(output_path="outputs/slide1_globe_rotation.gif", fram
     except OSError:
         pass
 
+
+def render_epic_thumbnail(epic_output_path="outputs/slide1_epic.png"):
+    """Fetch and render just the NASA EPIC companion photo, without rendering
+    the full matplotlib globe (build_earth_globe() replaces that)."""
+    from utils.generators import load_epic_image, download_epic_image
+    entries = load_epic_image()
+    if not entries:
+        return False
+    img_path = download_epic_image(entries[-1])
+    if not img_path:
+        return False
+    apply_dark_style()
+    fig2, ax2 = plt.subplots(figsize=(6, 6), dpi=200)
+    fig2.patch.set_facecolor(BG_COLOR)
+    img = plt.imread(img_path)
+    ax2.imshow(img)
+    ax2.axis('off')
+    ax2.set_title("NASA EPIC — Live Reference Photo", fontsize=11, color='#7df9ff', pad=10)
+    plt.savefig(epic_output_path, bbox_inches='tight', facecolor=BG_COLOR, dpi=200)
+    plt.close()
+    return True
+
+
+def build_earth_globe():
+    """Interactive orthographic globe. Drag to rotate, scroll to zoom — replaces
+    the fixed 24-frame GIF. Uses Plotly's built-in world-boundary layer (itself
+    Natural-Earth-derived), so no local shapefile is needed for this layer."""
+    import plotly.graph_objects as go
+    from utils.colors import BG_COLOR, DEEP_OCEAN
+
+    fig = go.Figure(go.Scattergeo())
+    fig.update_geos(
+        projection_type="orthographic",
+        projection_rotation=dict(lon=0, lat=20, roll=0),
+        showland=True, landcolor="#0d1b2a",
+        showocean=True, oceancolor=DEEP_OCEAN,
+        showcountries=False,
+        showcoastlines=True, coastlinecolor="rgba(0, 180, 255, 0.6)", coastlinewidth=1,
+        showframe=False, bgcolor=BG_COLOR,
+        lataxis_showgrid=True, lonaxis_showgrid=True,
+        lataxis_gridcolor="rgba(0, 180, 255, 0.15)", lonaxis_gridcolor="rgba(0, 180, 255, 0.15)",
+    )
+    fig.update_layout(
+        paper_bgcolor=BG_COLOR, showlegend=False,
+        margin=dict(l=0, r=0, t=50, b=0),
+        title=dict(
+            text="EARTH OVERVIEW — Deep Planet Oceans & Continents<br>"
+                 "<sub style='color:#888'>drag to rotate · scroll to zoom</sub>",
+            font=dict(color="#e0e0e0", size=18), x=0.5,
+        ),
+        height=700,
+    )
+    return fig
+
+
 if __name__ == "__main__":
     os.makedirs("outputs", exist_ok=True)
     render_globe()

@@ -453,22 +453,27 @@ def load_ocean_sst_data(data_dir="data", pattern="*.nc"):
             return result
 
     try:
-        import os, subprocess
+        import os
         from dotenv import load_dotenv
         load_dotenv()
         username = os.getenv("COPERNICUS_USERNAME")
         password = os.getenv("COPERNICUS_PASSWORD")
         if username and password:
-            output_path = search_dir / "glorys_sst.nc"
-            cmd = [
-                "copernicusmarine", "subset",
-                "--dataset-id", "cmems_mod_glo_phy_my_0.083deg_P1D-m",
-                "--variable", "thetao",
-                "--start-date", "2023-01-01", "--end-date", "2023-01-02",
-                "--north", "60", "--south", "-60", "--east", "180", "--west", "-180",
-                "--output-dir", str(search_dir), "--force-download",
-            ]
-            subprocess.run(cmd, check=False, capture_output=True, text=True)
+            import copernicusmarine
+            output_filename = "glorys_sst.nc"
+            copernicusmarine.subset(
+                dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",
+                variables=["thetao"],
+                minimum_longitude=-180, maximum_longitude=180,
+                minimum_latitude=-60, maximum_latitude=60,
+                start_datetime="2023-01-01", end_datetime="2023-01-02",
+                minimum_depth=0, maximum_depth=0,
+                username=username, password=password,
+                output_directory=str(search_dir),
+                output_filename=output_filename,
+                overwrite=True,
+            )
+            output_path = search_dir / output_filename
             if output_path.exists():
                 result = _read_sst(output_path)
                 if result:
