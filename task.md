@@ -1,122 +1,143 @@
-# task.md — Water Body: Earth Systems Data Art (v2)
+# task.md - Water Body: Earth Systems Data Art (v3)
 
-Read `plan.md` first. Task 0 and Task 1 from the previous version of this file
-are **done and verified** as of commit `975d139` — don't redo them, just don't
-regress them (see `plan.md`'s "Regression history" section for why that
-warning is there twice now).
+Read `PLAN.md` first. This file is the current next-action list after commit
+`d6dc2bf` on GitHub.
 
-This version covers what's genuinely still open.
+Verified on 2026-08-20:
+
+- GitHub `main` and local `main` both point at `d6dc2bf`.
+- `python -m pytest` passes: 6 tests.
+- Streamlit `AppTest` passes all 8 slides.
+- Slide 8 live satellite tracking is implemented with `st.fragment(run_every="5s")`.
+- Local `.env` has NASA, Movebank, and Copernicus credentials present.
+- Local data exists for EPIC cache, Movebank CSV, HydroRIVERS, sea ice, Natural Earth, and CelesTrak TLE.
+- Local NDVI GeoTIFF input is missing.
+- Local DEM GeoTIFF input is missing.
 
 ---
 
-## Task A — Verify the real-data claims in PROGRESS.md are actually true
+## Task 1 - Deploy to Streamlit Community Cloud
 
-`PROGRESS.md` currently checks off "NASA API key obtained," "Copernicus
-Marine account registered," "Movebank account access checked," and
-"HydroRIVERS data directory present locally." None of this is verifiable from
-a fresh clone — `data/` and `.env` are both gitignored. Run this **on the
-machine that actually has those files/credentials**, not in a fresh CI
-checkout, and only leave the boxes checked if every line below prints `True`
-or a real path:
+This is the main remaining blocker. Code is ready; deployment needs the user's
+Streamlit/GitHub account access.
 
-```bash
-python3 -c "
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-load_dotenv()
+- [ ] Open Streamlit Community Cloud: `https://share.streamlit.io`
+- [ ] Create a new app from `https://github.com/Abhisar-else/space-project`
+- [ ] Set main file path to `app.py`
+- [ ] Add secrets in the Streamlit dashboard, not in Git:
 
-print('NASA_API_KEY set:', bool(os.getenv('NASA_API_KEY')))
-print('MOVEBANK creds set:', bool(os.getenv('MOVEBANK_USERNAME')) and bool(os.getenv('MOVEBANK_PASSWORD')))
-print('COPERNICUS creds set:', bool(os.getenv('COPERNICUS_USERNAME')) and bool(os.getenv('COPERNICUS_PASSWORD')))
-print('HydroRIVERS gdb present:', Path('data/hydrorivers/HydroRIVERS_v10.gdb').exists())
-print('Rasterio NDVI source present:', any(Path('data/rasterio').glob('*.tif')) if Path('data/rasterio').exists() else False)
-print('GDAL DEM source present:', any(Path('data/gdal').glob('*.tif')) if Path('data/gdal').exists() else False)
-"
+```toml
+NASA_API_KEY = "..."
+MOVEBANK_USERNAME = "..."
+MOVEBANK_PASSWORD = "..."
+COPERNICUS_USERNAME = "..."
+COPERNICUS_PASSWORD = "..."
 ```
 
-Then confirm the loaders are actually *using* real data, not just falling
-through silently — add a one-off print and run each slide, or check for the
-loader's own downloaded artifacts:
+- [ ] Deploy from `main`.
+- [ ] Click through all 8 deployed slides.
+- [ ] Confirm Slide 8 satellite markers update every 5 seconds.
+- [ ] Add the deployed URL to `PROGRESS.md`.
+- [ ] Check `[x] Deployed on Streamlit Community Cloud` in `PROGRESS.md`.
+
+Verification:
+
 ```bash
-ls data/glorys_sst.nc 2>/dev/null && echo "Slide 4 has a real Copernicus file"
-ls data/*seaice*.nc 2>/dev/null && echo "Slide 5 has a real file"
+git status --short --branch
+python -m pytest
+python -c "from streamlit.testing.v1 import AppTest; at = AppTest.from_file('app.py'); at.run(timeout=90); print('exceptions:', at.exception)"
 ```
-If any of these are missing, the corresponding `PROGRESS.md` checkbox is
-currently wrong and should be unchecked until the file/credential actually
-exists.
 
 ---
 
-## Task B — Fix two stale lines in PROGRESS.md
+## Task 2 - Add real NDVI input for Slide 6
 
-- [ ] Remove or rewrite the "Blockers / notes" line: *"Remote repository is
-      configured as origin, but no push/deployment verification was performed
-      in this review."* This is no longer true — the repo has been cloned and
-      verified live multiple times as of `975d139`.
-- [ ] Slide 7 (GDAL/terrain) is currently `[ ]` unchecked in the Week 5
-      section despite `slides/slide7_terrain.py` existing and passing the
-      `AppTest` check in `plan.md`. Check it.
+Slide 6 currently works, but on this machine it falls back to synthetic data
+because `data/rasterio/*.tif` is missing.
 
-## Task C — Fix stale note in DATA_SOURCES.md
+Use one of these inputs:
 
-The `## Notes` section ends with *"Add `SKYFIELD` and `sgp4` to
-`requirements.txt` to enable satellite propagation."* — `skyfield` is already
-in `requirements.txt` (`sgp4` installs automatically as its dependency, no
-separate line needed). Delete this line.
+- A precomputed NDVI GeoTIFF, one band, values in `[-1, 1]`
+- A two-band GeoTIFF stack where band 1 is red and band 2 is NIR
 
----
+Place it under:
 
-## Task D — Deploy to Streamlit Community Cloud
+```text
+data/rasterio/
+```
 
-This has been on the roadmap since `PLAN.md` week 4 and has never been done.
+Then verify:
 
-- [ ] Push the repo (already done) — confirm `main` branch is what Streamlit
-      Cloud will build from.
-- [ ] On share.streamlit.io: New app → point at this repo → `app.py` as the
-      entry point.
-- [ ] Add secrets via the Streamlit Cloud dashboard's Secrets manager (**not**
-      a committed `.env`): `NASA_API_KEY`, `MOVEBANK_USERNAME`,
-      `MOVEBANK_PASSWORD`, `COPERNICUS_USERNAME`, `COPERNICUS_PASSWORD`. Note
-      `utils/generators.py` reads these via `python-dotenv`'s `load_dotenv()`
-      + `os.getenv()` — Streamlit Cloud secrets are exposed as environment
-      variables at runtime, so this works without code changes.
-- [ ] `gdaldem` (Slide 7's real-data path) is a system binary, not a pip
-      package — Streamlit Cloud won't have it unless a `packages.txt` file at
-      repo root lists `gdal-bin`. Add one if real DEM data is going into
-      deployment; otherwise Slide 7 will just run on its synthetic fallback in
-      the cloud, which is fine (that's exactly what the fallback is for) but
-      worth knowing rather than being surprised by.
-- [ ] After deploy, run through all 8 slides in the actual deployed app once
-      — cloud environments occasionally differ from local (memory limits,
-      missing system libs) in ways `AppTest` locally won't catch.
-- [ ] Once confirmed live, check the `PROGRESS.md` box: "Deployed on Streamlit
-      Community Cloud."
+```bash
+python -c "from pathlib import Path; print(any(Path('data/rasterio').glob('*.tif')))"
+python slides/slide6_ndvi.py
+```
+
+Do not commit `data/`; it is intentionally gitignored.
 
 ---
 
-## Task E — Optional: extend Slide 5's Copernicus fetch to auto-download
+## Task 3 - Add real DEM input for Slide 7
 
-Right now Slide 4 (`load_ocean_sst_data`) auto-downloads `thetao` from
-Copernicus Marine via `copernicusmarine.subset()`, but Slide 5
-(`load_sea_ice_data`) only checks for a local file — same account, same API,
-but no auto-fetch path. Since both slides already require the same
-`COPERNICUS_USERNAME`/`COPERNICUS_PASSWORD`, this is a small win: extend
-`load_sea_ice_data()` with the same `copernicusmarine.subset(variables=["siconc"], ...)`
-pattern used in `load_ocean_sst_data()`, following the exact same
-try/fallback structure. Low priority — not blocking anything, just an
-inconsistency worth closing if you're back in that function.
+Slide 7 currently works, but on this machine it falls back to synthetic terrain
+because `data/gdal/*.tif` is missing.
+
+Use a DEM GeoTIFF from Copernicus GLO-30, SRTM, or OpenTopography and place it
+under:
+
+```text
+data/gdal/
+```
+
+Then verify:
+
+```bash
+python -c "from pathlib import Path; print(any(Path('data/gdal').glob('*.tif')))"
+python slides/slide7_terrain.py
+```
+
+The current code computes hillshade in Python, so `gdaldem` is not required for
+the app path. Keep `gdal-bin` as optional deployment guidance only if future
+work switches back to GDAL CLI processing.
 
 ---
 
-## Task F — Real data files, if not already done (see Task A for how to check)
+## Task 4 - Confirm deployed real-data behavior
 
-| Slide | Needs | Account | .env vars | Goes in |
-|---|---|---|---|---|
-| 2 | Movebank whale study access | movebank.org **+ permission request to the study owner** — slow, apply early | `MOVEBANK_USERNAME`, `MOVEBANK_PASSWORD` | fetched live |
-| 3 | HydroRIVERS v10 geodatabase | none | — | `data/hydrorivers/HydroRIVERS_v10.gdb` |
-| 6 | Sentinel-2 L2A red/NIR (or Landsat) | Copernicus **Data Space** (dataspace.copernicus.eu) — separate account from Copernicus *Marine* | — | `data/rasterio/*.tif` |
-| 7 | DEM raster | none (Copernicus GLO-30) or free USGS/OpenTopography (SRTM) | — | `data/gdal/*.tif`; also needs `gdaldem` installed locally |
+After deployment, check whether each slide is using real data or fallback data
+in the cloud environment. Do not infer this from local files, because `data/`
+is gitignored and will not automatically exist in Streamlit Cloud.
 
-`.env.example` already exists at repo root and lists the right variable names
-— copy it to `.env` and fill in real values, don't recreate it.
+| Slide | Expected cloud behavior |
+|---|---|
+| 1 Earth Overview | Real EPIC metadata/image if `NASA_API_KEY` is set; fallback if API fails |
+| 2 Species Migration | Real Movebank if credentials and study permission work; fallback otherwise |
+| 3 River Veins | Synthetic unless HydroRIVERS is provided in cloud storage or committed another way |
+| 4 Ocean Currents | Can auto-fetch Copernicus SST with Copernicus Marine credentials |
+| 5 Sea Ice Cycle | Can auto-fetch Copernicus `siconc` with Copernicus Marine credentials |
+| 6 Vegetation Index | Synthetic unless an NDVI GeoTIFF is provided in the cloud filesystem |
+| 7 Terrain & Hillshade | Synthetic unless a DEM GeoTIFF is provided in the cloud filesystem |
+| 8 Satellite Tracking | Real CelesTrak TLE fetch if outbound network works; synthetic fallback otherwise |
+
+If real local-only files are required in the hosted app, add a separate data
+hosting strategy. Do not commit large raw datasets just to make Streamlit Cloud
+see them.
+
+---
+
+## Task 5 - Completed: Slide 5 Copernicus auto-fetch
+
+`load_sea_ice_data()` now checks local `*seaice*.nc` files first, then downloads
+Arctic monthly 2023 `siconc` data from Copernicus Marine when credentials are
+available, and finally falls back to the synthetic cycle. The downloader is
+covered by a mocked regression test.
+
+Verification:
+
+```bash
+python -m pytest tests/test_sea_ice_loader.py
+python slides/slide5_seaice.py
+```
+
+Keep the fallback contract: any API/file failure returns the synthetic sea-ice
+cycle, never an app crash.

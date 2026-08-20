@@ -4,8 +4,7 @@ Context document for any AI agent (Copilot or otherwise) working on this repo.
 Read this in full before changing code. It is the durable "why" — `task.md` in
 the same directory is the concrete, sequenced "what to do right now."
 
-(v2 — previous version was written but never committed; this replaces it,
-updated against the actual current repo state as of commit `975d139`.)
+(v3 - updated against the actual current repo state as of commit `d6dc2bf`.)
 
 ## What this project is
 
@@ -62,13 +61,13 @@ Live repo: `github.com/Abhisar-else/space-project`
 7. **Targeted diffs, not full-file rewrites**, unless a file is genuinely
    structurally broken.
 
-## Regression history (resolved as of `975d139` — stay alert for a repeat)
+## Regression history (resolved as of `d6dc2bf` - stay alert for a repeat)
 
 Earlier in this repo's history, the interactive-globe conversion for slides 1
 and 2, and a Python-API fix to the Copernicus Marine downloader, were each
 implemented, verified working, then silently reverted when a later commit was
 built from an older checkout. Both are confirmed fixed now, verified directly
-against commit `975d139`: `build_earth_globe`, `render_epic_thumbnail`,
+against commit `d6dc2bf`: `build_earth_globe`, `render_epic_thumbnail`,
 `build_migration_globe` all present and imported; `load_ocean_sst_data` calls
 `copernicusmarine.subset()` directly, not a subprocess.
 
@@ -77,7 +76,7 @@ is still present just because it was implemented once. Grep for it and
 confirm before building on top of it** — same as the verification commands
 below do at the end of every task.
 
-## Current state per slide (verified against commit `975d139`)
+## Current state per slide (verified against commit `d6dc2bf`)
 
 | # | Slide | Render style | Loader | Real source | Code status | Real data confirmed on disk? |
 |---|---|---|---|---|---|---|
@@ -85,18 +84,18 @@ below do at the end of every task.
 | 2 | Species Migration | interactive globe | `load_movebank_migration` | Movebank | working | unverifiable from repo |
 | 3 | River Veins | interactive globe | `load_hydrorivers` | HydroRIVERS v10 | working | unverifiable — needs `data/hydrorivers/` |
 | 4 | Ocean Currents | static PNG | `load_ocean_sst_data` | Copernicus Marine GLORYS12V1 | working, auto-downloads via `copernicusmarine.subset()` | unverifiable |
-| 5 | Sea Ice Cycle | animated GIF | `load_sea_ice_data` | Copernicus Marine (siconc) / NSIDC | working, **local-file-only, no auto-download** | unverifiable |
+| 5 | Sea Ice Cycle | animated GIF | `load_sea_ice_data` | Copernicus Marine (siconc) / NSIDC | working, auto-downloads Arctic monthly `siconc` when credentials are available | unverifiable |
 | 6 | Vegetation Index | static PNG | `load_ndvi_data` | Sentinel-2/Landsat | working, local-file-only | not yet — `PROGRESS.md` confirms still synthetic |
-| 7 | Terrain & Hillshade | static PNG | `load_dem_hillshade` | SRTM / Copernicus GLO-30 DEM | working, needs `gdaldem` + local file | not yet |
+| 7 | Terrain & Hillshade | static PNG | `load_dem_hillshade` | SRTM / Copernicus GLO-30 DEM | working, needs local DEM for real data | not yet |
 | 8 | Satellite Tracking | interactive globe | `load_satellite_positions` | CelesTrak TLE (Skyfield/SGP4) | working, auto-fetches, no account needed | live once deployed with network access |
 
-All 8 slides pass a full `AppTest` run with zero exceptions as of `975d139`.
-`pytest` is 5/5.
+All 8 slides pass a full `AppTest` run with zero exceptions as of `d6dc2bf`.
+`pytest` is 6/6.
 
 ## Tech stack
 
 Python 3.11, Streamlit, Plotly, matplotlib + cartopy, GeoPandas, Shapely,
-PyProj, Rasterio, GDAL (CLI via `gdaldem`), Skyfield, xarray, netCDF4,
+PyProj, Rasterio, Skyfield, xarray, netCDF4,
 copernicusmarine. Conda preferred locally (Windows dev environment); plain
 pip works for CI/testing.
 

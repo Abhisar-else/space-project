@@ -14,7 +14,7 @@
 - [x] Code imports clean (unused imports removed where applicable)
 - [x] Documentation updated (PROGRESS.md, DATA_SOURCES.md stale notes fixed)
 - [x] Fallback behavior preserved across all loaders
-- [x] Git repo ready (`main` branch has latest commit `975d139`)
+- [x] Git repo ready (`main` branch has latest commit `d6dc2bf`)
 
 ---
 
@@ -59,17 +59,17 @@ COPERNICUS_PASSWORD = "your-copernicus-marine-password"
 
 ---
 
-### 4. Optional: Add System Dependencies (if real Slide 7 data is deployed)
+### 4. Optional: Add System Dependencies (only if GDAL CLI is reintroduced)
 
-If you're adding real Copernicus GLO-30 DEM or SRTM raster data to `data/gdal/` before deployment, add a `packages.txt` file to the repo root:
+If future changes switch Slide 7 back to shelling out to GDAL CLI tools, add a `packages.txt` file to the repo root:
 
 ```
 gdal-bin
 ```
 
-This installs the GDAL CLI tools (including `gdaldem` for Slide 7 hillshade computation).
+This installs the GDAL CLI tools, including `gdaldem`.
 
-**If not adding real DEM data:** skip this step — Slide 7 will gracefully fall back to synthetic terrain, which is fine.
+**Current code path:** skip this step. Slide 7 computes hillshade in Python and gracefully falls back to synthetic terrain when no real DEM exists.
 
 ---
 

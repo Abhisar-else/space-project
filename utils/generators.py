@@ -497,14 +497,11 @@ def load_ocean_sst_data(data_dir="data", pattern="*.nc"):
     return generate_sst_grid()
 
 def load_sea_ice_data(data_dir="data", pattern="*seaice*.nc"):
-    """Load real sea ice concentration frames from a local NetCDF file
-    (e.g. Copernicus GLORYS siconc). Falls back to the synthetic cycle if missing."""
+    """Load local or Copernicus sea ice concentration frames, with a synthetic fallback."""
     search_dir = Path(data_dir)
-    if not search_dir.exists():
-        return generate_sea_ice_cycle()
+    search_dir.mkdir(parents=True, exist_ok=True)
 
-    candidates = sorted(search_dir.rglob(pattern))
-    for path in candidates:
+    def _read_sea_ice(path):
         try:
             ds = xr.open_dataset(path)
             if "siconc" in ds.data_vars:
@@ -525,5 +522,39 @@ def load_sea_ice_data(data_dir="data", pattern="*seaice*.nc"):
             ds.close()
         except Exception as exc:
             print(f"Sea ice load failed for {path}: {exc}")
+        return None
+
+    for path in sorted(search_dir.rglob(pattern)):
+        result = _read_sea_ice(path)
+        if result:
+            return result
+
+    try:
+        import os
+        from dotenv import load_dotenv
+
+        load_dotenv()
+        username = os.getenv("COPERNICUS_USERNAME")
+        password = os.getenv("COPERNICUS_PASSWORD")
+        if username and password:
+            import copernicusmarine
+
+            output_filename = "glorys_seaice.nc"
+            copernicusmarine.subset(
+                dataset_id="cmems_mod_glo_phy_my_0.083deg_P1M-m",
+                variables=["siconc"],
+                minimum_longitude=-180, maximum_longitude=180,
+                minimum_latitude=50, maximum_latitude=90,
+                start_datetime="2023-01-01", end_datetime="2023-12-01",
+                username=username, password=password,
+                output_directory=str(search_dir),
+                output_filename=output_filename,
+                overwrite=True,
+            )
+            result = _read_sea_ice(search_dir / output_filename)
+            if result:
+                return result
+    except Exception as exc:
+        print(f"Copernicus sea ice download failed: {exc}")
 
     return generate_sea_ice_cycle()

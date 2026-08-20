@@ -32,6 +32,7 @@ Updated after reviewing the repository implementation and generated output asset
 - [ ] EONET live layer added (optional stretch)
 - [x] README created and populated with project overview and docs
 - [x] Pushed to GitHub   <!-- confirmed live, was unchecked -->
+
 ## Week 5 — GIS toolkit additions
 - [x] Fixed duplicate function defs in utils/generators.py
 - [x] Fixed broken requirements.txt (-dotenv typo)
@@ -47,4 +48,8 @@ Updated after reviewing the repository implementation and generated output asset
 
 ## Blockers / notes
 
+- Local verification on 2026-08-20: `.env` has NASA, Movebank, and Copernicus
+  credentials present; local data exists for EPIC cache, Movebank CSV,
+  HydroRIVERS, sea ice, Natural Earth, and CelesTrak TLE. Local NDVI GeoTIFF
+  and DEM GeoTIFF inputs are still missing.
 - Deployment to Streamlit Community Cloud is the remaining major task (Week 5).

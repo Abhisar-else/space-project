@@ -255,7 +255,7 @@ elif slide == "7. Terrain & Hillshade":
         <div class="citation-box">
             <h4>Data Attribution & Source Details</h4>
             <p><b>Data Sources:</b> GDAL-processed Digital Elevation Model (SRTM 30m, or any GDAL-readable DEM raster).</p>
-            <p><b>Visual Concept:</b> Hillshade relief computed via <code>gdaldem hillshade</code>, simulating sun illumination (altitude 45°, azimuth 315°) across terrain slope and aspect.</p>
+            <p><b>Visual Concept:</b> Hillshade relief computed from the DEM array, simulating sun illumination (altitude 45°, azimuth 315°) across terrain slope and aspect.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -274,7 +274,7 @@ elif slide == "8. Satellite Tracking":
         else:
             # Build globe from freshly-propagated positions
             fig = build_satellite_globe_live(satellites, ts)
-        st.plotly_chart(fig, use_container_width=True, key="satellite_globe_live")
+        st.plotly_chart(fig, width='stretch', key="satellite_globe_live")
     
     render_live_satellite_globe()
     st.caption("Drag to rotate · scroll or pinch to zoom. Live positions update every 5 seconds.")
