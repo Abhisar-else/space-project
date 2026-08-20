@@ -10,7 +10,7 @@ from slides.slide4_ocean import render_ocean_sst
 from slides.slide5_seaice import render_sea_ice_gif
 from slides.slide6_ndvi import render_ndvi
 from slides.slide7_terrain import render_terrain
-from slides.slide8_satellites import build_satellite_globe
+from slides.slide8_satellites import build_satellite_globe, build_satellite_globe_live, fetch_satellites_for_display
 # Configure Streamlit page layout and dark aesthetics
 st.set_page_config(
     page_title="Water Body: Earth Systems Data Art",
@@ -25,9 +25,10 @@ def _cached_build_river_globe():
     return build_river_globe()
 
 
-@st.cache_data(ttl=300)
-def _cached_build_satellite_globe():
-    return build_satellite_globe()
+@st.cache_resource(ttl=3600, show_spinner=False)
+def _cached_tle_fetch():
+    """Fetch TLE data once per hour — the expensive network part."""
+    return fetch_satellites_for_display()
 
 
 @st.cache_data(show_spinner=False)
@@ -262,9 +263,22 @@ elif slide == "7. Terrain & Hillshade":
 
 elif slide == "8. Satellite Tracking":
     st.subheader("8. Satellite Tracking — Live Orbital Positions")
-    satellite_fig = _cached_build_satellite_globe()
-    st.plotly_chart(satellite_fig, width='stretch')
-    st.caption("Drag to rotate · scroll or pinch to zoom.")
+    
+    @st.fragment(run_every="5s")
+    def render_live_satellite_globe():
+        """Fragment that reruns every 5 seconds to show real satellite movement."""
+        satellites, ts = _cached_tle_fetch()
+        if satellites is None or ts is None:
+            # Fall back to static synthetic data if TLE fetch fails
+            fig = build_satellite_globe()
+        else:
+            # Build globe from freshly-propagated positions
+            fig = build_satellite_globe_live(satellites, ts)
+        st.plotly_chart(fig, use_container_width=True, key="satellite_globe_live")
+    
+    render_live_satellite_globe()
+    st.caption("Drag to rotate · scroll or pinch to zoom. Live positions update every 5 seconds.")
+    
     st.markdown(
         """
         <div class="citation-box">

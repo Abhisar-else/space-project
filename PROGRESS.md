@@ -37,7 +37,7 @@ Updated after reviewing the repository implementation and generated output asset
 - [x] Fixed broken requirements.txt (-dotenv typo)
 - [x] Slide 6 — Rasterio NDVI demo (synthetic fallback) built + wired into app.py
 - [ ] Real Sentinel-2/Landsat NDVI integration
-- [ ] Slide 7 — GDAL DEM/hillshade demo
+- [x] Slide 7 — GDAL DEM/hillshade demo
 - [x] git rm reqirments.txt + untrack outputs/
 - [ ] Deployed on Streamlit Community Cloud
 - [x] Slide 8 — Satellite Tracking implemented with `skyfield` and synthetic fallback
@@ -47,4 +47,4 @@ Updated after reviewing the repository implementation and generated output asset
 
 ## Blockers / notes
 
-- Remote repository is configured as origin, but no push/deployment verification was performed in this review.
+- Deployment to Streamlit Community Cloud is the remaining major task (Week 5).

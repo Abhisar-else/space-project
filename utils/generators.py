@@ -63,54 +63,67 @@ def generate_river_network():
             lines.append(LineString(trib))
     return gpd.GeoDataFrame(geometry=lines, crs="EPSG:4326")
 
-def load_satellite_positions(group="stations", track_minutes=30, step_minutes=3, max_age_days=14):
-    """Fetch real satellite positions from CelesTrak and return current subpoints.
-
-    If the CelesTrak fetch fails or the TLE epoch looks stale, return None so
-    the app can fall back to the synthetic generator.
+def fetch_tle_satellites(group="stations", max_age_days=14):
+    """Fetch and parse real TLEs from CelesTrak, filtered to non-stale entries.
+    
+    Returns (satellites, timescale) tuple — cache this for a while, it's the network part.
+    Returns (None, None) if fetch fails or no satellites pass age filter.
     """
     try:
         from skyfield.api import load
-
+        
         cache_dir = Path("data/satellites")
         cache_dir.mkdir(parents=True, exist_ok=True)
         url = f"https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle"
         ts = load.timescale()
         tle_path = cache_dir / f"{group}.tle"
         satellites = load.tle_file(url, filename=str(tle_path), reload=True, ts=ts)
+        
         if not satellites:
-            return None
-
+            return None, None
+        
         now = ts.now()
-        rows = []
-        for sat in satellites:
-            # skyfield `Time` object supports subtraction producing a TimeDelta-like
-            # value; use total_seconds/86400 for robust day-age calculation.
-            try:
-                age_days = float((now - sat.epoch).total_seconds() / 86400.0)
-            except Exception:
-                age_days = float((now - sat.epoch).days)
-            if age_days > max_age_days:
-                continue
-            subpoint = sat.at(now).subpoint()
-            track = []
-            for minute in range(0, track_minutes + 1, step_minutes):
-                point = sat.at(now + minute / 1440.0).subpoint()
-                track.append((point.longitude.degrees, point.latitude.degrees))
-            rows.append({
-                "name": sat.name,
-                "lon": subpoint.longitude.degrees,
-                "lat": subpoint.latitude.degrees,
-                "alt_km": subpoint.elevation.km,
-                "track": track,
-            })
-
-        if not rows:
-            return None
-        return pd.DataFrame(rows)
+        # (now - sat.epoch) is already a plain float number of days — no .total_seconds()/.days needed
+        fresh = [sat for sat in satellites if (now - sat.epoch) <= max_age_days]
+        return (fresh, ts) if fresh else (None, None)
     except Exception as exc:
-        print(f"Satellite position load failed: {exc}")
+        print(f"Satellite TLE fetch failed: {exc}")
+        return None, None
+
+
+def propagate_satellites(satellites, ts, track_minutes=30, step_minutes=3):
+    """Pure math, no network — safe to call every few seconds for live movement.
+    
+    Takes already-loaded satellite objects and computes current positions + ground tracks.
+    """
+    now = ts.now()
+    rows = []
+    for sat in satellites:
+        subpoint = sat.at(now).subpoint()
+        track = []
+        for minute in range(0, track_minutes + 1, step_minutes):
+            point = sat.at(now + minute / 1440.0).subpoint()
+            track.append((point.longitude.degrees, point.latitude.degrees))
+        rows.append({
+            "name": sat.name,
+            "lon": subpoint.longitude.degrees,
+            "lat": subpoint.latitude.degrees,
+            "alt_km": subpoint.elevation.km,
+            "track": track,
+        })
+    return pd.DataFrame(rows) if rows else None
+
+
+def load_satellite_positions(group="stations", track_minutes=30, step_minutes=3, max_age_days=14):
+    """Fetch + propagate in one call — kept for backward compatibility.
+    
+    If the CelesTrak fetch fails or the TLE epoch looks stale, return None so
+    the app can fall back to the synthetic generator.
+    """
+    satellites, ts = fetch_tle_satellites(group=group, max_age_days=max_age_days)
+    if satellites is None:
         return None
+    return propagate_satellites(satellites, ts, track_minutes, step_minutes)
 
 def generate_satellite_positions(n=8, track_minutes=30, step_minutes=3):
     """Generate a small synthetic LEO fleet when real TLE data cannot be fetched."""

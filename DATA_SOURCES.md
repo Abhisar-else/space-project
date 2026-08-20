@@ -68,4 +68,3 @@ Every dataset used, exactly where to get it, and what it feeds.
   from the data owner — apply early, this can take a few days.
 - Copernicus Marine and NASA Earthdata both use OAuth-style tokens — store
   credentials in a local `.env` file, never commit them.
-- Add `SKYFIELD` and `sgp4` to `requirements.txt` to enable satellite propagation.
