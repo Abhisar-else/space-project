@@ -32,6 +32,9 @@ TERRAIN_LIT = "#d6f3ff"
 SATELLITE_MARKER = "#ffe066"
 ORBIT_TRACE = "#ff9f1c"
 
+METEOR_TRAIL = "#fffbea"
+METEOR_GLOW = "#ff6b35"
+
 def apply_dark_style():
     plt.rcParams.update({
         'figure.facecolor': BG_COLOR,
