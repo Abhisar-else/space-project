@@ -11,6 +11,7 @@ from slides.slide5_seaice import render_sea_ice_gif
 from slides.slide6_ndvi import render_ndvi
 from slides.slide7_terrain import render_terrain
 from slides.slide8_satellites import build_satellite_globe, build_satellite_globe_live, fetch_satellites_for_display
+from slides.slide9_meteors import build_meteor_calendar
 # Configure Streamlit page layout and dark aesthetics
 st.set_page_config(
     page_title="Water Body: Earth Systems Data Art",
@@ -107,7 +108,8 @@ slide = st.sidebar.selectbox(
         "5. Sea Ice Cycle",
         "6. Vegetation Index",
         "7. Terrain & Hillshade",
-        "8. Satellite Tracking"
+        "8. Satellite Tracking",
+        "9. Meteor Showers"
     ]
 )
 
@@ -278,6 +280,20 @@ elif slide == "8. Satellite Tracking":
     
     render_live_satellite_globe()
     st.caption("Drag to rotate · scroll or pinch to zoom. Live positions update every 5 seconds.")
+
+elif slide == "9. Meteor Showers":
+    st.subheader("9. Meteor Showers — Annual Radiant Calendar")
+    st.plotly_chart(build_meteor_calendar(), width="stretch")
+    st.markdown(
+        """
+        <div class="citation-box">
+            <h4>Data Attribution & Source Details</h4>
+            <p><b>Data Sources:</b> International Meteor Organization-style annual shower calendar and IAU Meteor Data Center conventions.</p>
+            <p><b>Visual Concept:</b> A seasonal timeline of named meteor showers, with color encoding geocentric entry velocity and hover details for each radiant.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
     st.markdown(
         """

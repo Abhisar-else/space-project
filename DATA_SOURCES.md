@@ -61,6 +61,12 @@ Every dataset used, exactly where to get it, and what it feeds.
 |---|---|---|
 | CelesTrak | Live orbital element sets (TLE) | Free, no account — celestrak.org/NORAD/elements/gp.php |
 
+## Slide 9 — Meteor showers
+
+| Source | Type | Access |
+|---|---|---|
+| IAU Meteor Data Center / International Meteor Organization conventions | Annual shower names, activity windows, radiants, and velocities | Public reference data; optional local CSV files are read from `data/meteors/` |
+
 ## Notes
 
 - All sources are free and open — no paid API tiers required for this project scope.

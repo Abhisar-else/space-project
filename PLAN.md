@@ -8,7 +8,7 @@ the same directory is the concrete, sequenced "what to do right now."
 
 ## What this project is
 
-An 8-slide interactive Streamlit dashboard, inspired by the *Water Body* data-art
+An 9-slide interactive Streamlit dashboard, inspired by the *Water Body* data-art
 installation (marshmallowlaserfeast, ARTIS Amsterdam Royal Zoo, 2026), built
 entirely from open scientific datasets and original code. It doubles as a
 portfolio demonstration of the Python geospatial toolkit: GeoPandas, Shapely,
@@ -89,8 +89,8 @@ below do at the end of every task.
 | 7 | Terrain & Hillshade | static PNG | `load_dem_hillshade` | SRTM / Copernicus GLO-30 DEM | working, needs local DEM for real data | not yet |
 | 8 | Satellite Tracking | interactive globe | `load_satellite_positions` | CelesTrak TLE (Skyfield/SGP4) | working, auto-fetches, no account needed | live once deployed with network access |
 
-All 8 slides pass a full `AppTest` run with zero exceptions as of `d6dc2bf`.
-`pytest` is 6/6.
+All 9 slides pass a full `AppTest` run with zero exceptions after slide 9 integration.
+`pytest` includes focused coverage for the meteor calendar fallback.
 
 ## Tech stack
 

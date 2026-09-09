@@ -150,6 +150,54 @@ def generate_satellite_positions(n=8, track_minutes=30, step_minutes=3):
         })
     return pd.DataFrame(rows)
 
+
+def generate_meteor_showers(year=None):
+    """Generate the annual meteor-shower calendar used by slide 9."""
+    year = year or pd.Timestamp.now().year
+    showers = [
+        ("Quadrantids", "2003 EH1", "01-03", "01-12", "01-04", 41, 230.0, 49.0, 120),
+        ("Lyrids", "C/1861 G1 Thatcher", "04-16", "04-25", "04-22", 49, 271.0, 34.0, 18),
+        ("Eta Aquariids", "1P/Halley", "04-19", "05-28", "05-05", 66, 338.0, -1.0, 60),
+        ("Delta Aquariids", "96P/Machholz", "07-12", "08-23", "07-30", 41, 340.0, -16.0, 25),
+        ("Perseids", "109P/Swift-Tuttle", "07-17", "08-24", "08-12", 59, 48.0, 58.0, 150),
+        ("Orionids", "1P/Halley", "10-02", "11-07", "10-21", 66, 95.0, 16.0, 20),
+        ("Leonids", "55P/Tempel-Tuttle", "11-06", "11-30", "11-17", 71, 153.0, 22.0, 15),
+        ("Geminids", "3200 Phaethon", "12-04", "12-20", "12-14", 35, 112.0, 33.0, 150),
+        ("Ursids", "8P/Tuttle", "12-17", "12-26", "12-22", 33, 217.0, 76.0, 10),
+    ]
+    return pd.DataFrame([
+        {
+            "name": name,
+            "parent_body": parent_body,
+            "start_date": pd.Timestamp(f"{year}-{start}"),
+            "end_date": pd.Timestamp(f"{year}-{end}"),
+            "peak_date": pd.Timestamp(f"{year}-{peak}"),
+            "velocity_km_s": velocity,
+            "ra": ra,
+            "dec": dec,
+            "member_count": member_count,
+        }
+        for name, parent_body, start, end, peak, velocity, ra, dec, member_count in showers
+    ])
+
+
+def load_meteor_showers(year=None, data_dir="data/meteors", pattern="*.csv"):
+    """Load an optional local meteor catalog, returning None on any failure."""
+    try:
+        for path in sorted(Path(data_dir).rglob(pattern)):
+            data = pd.read_csv(path)
+            required = {"name", "start_date", "end_date", "peak_date", "velocity_km_s"}
+            if not required.issubset(data.columns):
+                continue
+            for column in ("start_date", "end_date", "peak_date"):
+                data[column] = pd.to_datetime(data[column], errors="raise")
+            if year is not None:
+                data = data[data["peak_date"].dt.year == year]
+            return data.reset_index(drop=True)
+    except Exception as exc:
+        print(f"Meteor shower load failed: {exc}")
+    return None
+
 def generate_sst_grid():
     """Create a climatology-like SST field using observed broad-scale patterns.
 

@@ -13,9 +13,7 @@ processing**, alongside **Plotly, Skyfield, xarray, and cartopy**.
 
 ## Slides
 
-**8 slides are wired into the live app today.** A 9th (meteor showers) is
-implemented and tested as a standalone module but not yet wired into
-`app.py` — see [Slide 9](#slide-9--meteor-shower-calendar-not-yet-wired) below.
+**9 slides are wired into the live app today.**
 
 | # | Slide | Render pattern | Primary real data source |
 |---|---|---|---|
@@ -42,15 +40,12 @@ would be a coordinate-system error, not a style choice. Instead,
 calendar date (a low-precision solar-ecliptic-longitude formula, Meeus'
 *Astronomical Algorithms* ch. 25) and renders it as a `plotly.express.timeline`.
 
-### Slide 9 — meteor shower calendar (not yet wired)
+### Slide 9 — meteor shower calendar
 
-`slides/slide9_meteors.py` and `build_meteor_calendar()` exist, parse
-correctly, and were validated against known real shower peak dates during
-development. It is **not currently imported or dispatched in `app.py`**, so
-it won't appear in the running app's sidebar yet, and it has no
-`DATA_SOURCES.md` entry. Wiring it in is a small, well-scoped next task:
-add the import, add `"9. Meteor Showers"` to the sidebar `selectbox`, add a
-dispatch branch, and add the corresponding `DATA_SOURCES.md` row.
+`slides/slide9_meteors.py` builds a Plotly timeline from the annual shower
+catalog. The data layer first accepts an optional local CSV in
+`data/meteors/`, then falls back to a deterministic catalog so the slide
+remains available without external data.
 
 ## Fallback behavior
 

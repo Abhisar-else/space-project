@@ -43,6 +43,7 @@ Updated after reviewing the repository implementation and generated output asset
 - [ ] Deployed on Streamlit Community Cloud
 - [x] Slide 8 — Satellite Tracking implemented with `skyfield` and synthetic fallback
 - [x] `requirements.txt` updated to include `skyfield`
+- [x] Slide 9 — Meteor Shower Calendar implemented with local CSV support and deterministic fallback
 - [x] Add Streamlit caching wrappers for interactive slides
 - [x] Run tests and verify imports (5 passed)
 
